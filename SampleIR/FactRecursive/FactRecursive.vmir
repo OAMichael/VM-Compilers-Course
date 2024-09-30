@@ -1,0 +1,16 @@
+function i32 #Fact(i32 v0) {
+BB_1:
+    Beq i32 v0, 0 ? #BB_3 : #BB_2
+
+BB_2: (preds: BB_1)
+    Beq i32 v0, 1 ? #BB_3 : #BB_4
+
+BB_3: (preds: BB_1, BB_2)
+    Ret i32 1
+
+BB_4: (preds: BB_2)
+    v1 = Sub i32 v0, 1
+    v2 = Call i32 #Fact(i32 v1)
+    v3 = Mul i32 v0, v2
+    Ret i32 v3
+}

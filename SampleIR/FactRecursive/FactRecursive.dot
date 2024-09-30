@@ -1,0 +1,9 @@
+digraph G {
+    graph[color="#242038"]
+    node[color="#242038", shape=square]
+    edge[color="#242038"]
+    BB_1->BB_3
+    BB_1->BB_2
+    BB_2->BB_3
+    BB_2->BB_4
+}

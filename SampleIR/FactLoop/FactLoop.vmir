@@ -1,0 +1,23 @@
+function ui64 #Fact(ui64 v0) {
+Entry:
+    v1 = Add ui64 0, 1
+    Jump #LoopPreheader
+
+LoopPreheader: (preds: Entry)
+    v2 = Add ui64 0, 2
+    Jump #LoopHeader
+
+LoopHeader: (preds: LoopPreheader, LoopBody)
+    v3 = Phi ui64 v2, v6
+    Bgt ui64 v3, v0 ? #LoopExit : #LoopBody
+
+LoopBody: (preds: LoopHeader)
+    v4 = Phi ui64 v1, v5
+    v5 = Mul ui64 v4, v3
+    v6 = Add ui64 v3, 1
+    Jump #LoopHeader
+
+LoopExit: (preds: LoopHeader)
+    v7 = Phi ui64 v1, v5
+    Ret ui64 v7
+}
