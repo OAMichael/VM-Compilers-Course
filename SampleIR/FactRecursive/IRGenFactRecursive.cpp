@@ -13,13 +13,13 @@ int main() {
     VMIR::BasicBlock* BB_3 = IrBuilder->CreateBasicBlock(Fact, "BB_3");
     VMIR::BasicBlock* BB_4 = IrBuilder->CreateBasicBlock(Fact, "BB_4");
 
-    const VMIR::Value* zero = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32, 0);
-    const VMIR::Value* one  = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32, 1);
+    VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0);
+    VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1);
 
-    const VMIR::Value* v0 = Fact->GetArg(0);
-    const VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
-    const VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
-    const VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
+    VMIR::Value* v0 = Fact->GetArg(0);
+    VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
 
     // BB_1
     IrBuilder->CreateBeq(BB_1, v0, zero, BB_3, BB_2);

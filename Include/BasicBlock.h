@@ -10,15 +10,10 @@ namespace VMIR {
 
 class Function;
 
-using BasicBlockId = int64_t;
-
 class BasicBlock {
 public:
     BasicBlock(const Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
     : mParentFunction{parentFunction}, mId{id}, mName{name} {};
-    
-    BasicBlock(const std::vector<Instruction*>& instructions, const Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
-    : mParentFunction{parentFunction}, mId(id), mName{name}, mInstructions{instructions} {};
 
     inline const Function *GetParentFunction() const { return mParentFunction; }
     inline void SetParentFunction(const Function* parentFunction) { mParentFunction = parentFunction; }
@@ -29,49 +24,167 @@ public:
     inline std::string GetName() const { return mName.length() > 0 ? (mName) : ("<Unnamed BB#" + std::to_string(mId) + ">"); }
     inline void SetName(const std::string& name) { mName = name; }
 
-    inline Instruction *Front() const { return mInstructions.front(); }
-    inline Instruction *Back()  const { return mInstructions.back(); }
-    inline size_t Size() const { return mInstructions.size(); }
+    inline Instruction* Front() const { return mFirstInst; }
+    inline Instruction* Back()  const { return mLastInst; }
+    inline size_t Size() const { return mSize; }
 
-    inline Instruction *GetInstruction(const size_t idx) const { return mInstructions[idx]; }
-    inline void AppendInstruction(Instruction* const inst) { mInstructions.push_back(inst); }
+    Instruction *GetInstruction(const size_t idx) const {
+        if (idx >= mSize) {
+            return nullptr;
+        }
 
-    inline const std::vector<const BasicBlock*>& GetPredecessors() const { return mPredecessors; }
-    inline const std::vector<const BasicBlock*>& GetSuccessors() const { return mSuccessors; }
+        Instruction* ret = mFirstInst;
+        for (size_t i = idx; i > 0; --i) {
+            ret = ret->GetNext();
+        }
+        return ret;
+    }
 
-    inline void AddPredecessor(const BasicBlock* pred) { mPredecessors.push_back(pred); }
-    inline void AddSuccessor(const BasicBlock* succ)   { mSuccessors.push_back(succ); }
+    void PrependInstruction(Instruction* inst) {
+        if (mFirstInst == nullptr) {
+            mFirstInst = mLastInst = inst;
+        }
+        else {
+            inst->SetNext(mFirstInst);
+            mFirstInst->SetPrev(inst);
+            mFirstInst = inst;
+        }
+        inst->SetParentBasicBlock(this);
+        ++mSize;
+    }
+
+    void AppendInstruction(Instruction* inst)  {
+        if (mLastInst == nullptr) {
+            mFirstInst = mLastInst = inst;
+        }
+        else {
+            mLastInst->SetNext(inst);
+            inst->SetPrev(mLastInst);
+            mLastInst = inst;
+        }
+        inst->SetParentBasicBlock(this);
+        ++mSize;
+    }
+
+    void InsertInstructionBefore(Instruction* inst, Instruction* position) {
+        if (position == nullptr || position->GetParentBasicBlock() != this) {
+            return;
+        }
+
+        Instruction* instBefore = position->GetPrev();
+        if (instBefore != nullptr) {
+            instBefore->SetNext(inst);
+            inst->SetPrev(instBefore);
+        }
+        else {
+            mFirstInst = inst;
+        }
+
+        inst->SetNext(position);
+        position->SetPrev(inst);
+
+        inst->SetParentBasicBlock(this);
+        ++mSize;
+    }
+
+    void InsertInstructionAfter(Instruction* inst, Instruction* position) {
+        if (position == nullptr || position->GetParentBasicBlock() != this) {
+            return;
+        }
+
+        Instruction* instAfter = position->GetNext();
+        if (instAfter != nullptr) {
+            inst->SetNext(instAfter);
+            instAfter->SetPrev(inst);
+        }
+        else {
+            mLastInst = inst;
+        }
+
+        position->SetNext(inst);
+        inst->SetPrev(position);
+
+        inst->SetParentBasicBlock(this);
+        ++mSize;
+    }
+
+    void RemoveInstruction(Instruction* inst) {
+        if (inst == nullptr || inst->GetParentBasicBlock() != this) {
+            return;
+        }
+
+        Instruction* instBefore = inst->GetPrev();
+        Instruction* instAfter = inst->GetNext();
+
+        if (instBefore != nullptr) {
+            instBefore->SetNext(instAfter);
+        }
+        else {
+            mFirstInst = instAfter;
+        }
+
+        if (instAfter != nullptr) {
+            instAfter->SetPrev(instBefore);
+        }
+        else {
+            mLastInst = instBefore;
+        }
+
+        inst->SetParentBasicBlock(nullptr);
+        --mSize;
+    }
+
+    inline const std::set<BasicBlock*>& GetPredecessors() const { return mPredecessors; }
+
+    inline void SetPredecessors(const std::set<BasicBlock*>& preds) { mPredecessors = preds; }
+    inline void AddPredecessor(BasicBlock* pred)       { mPredecessors.insert(pred); }
+    inline bool HasPredecessor(BasicBlock* pred) const { return mPredecessors.contains(pred); }
+    inline void RemovePredecessor(BasicBlock* pred)    { mPredecessors.erase(pred); }
+
+    inline BasicBlock* GetSuccessor()      { return mTrueSuccessor; }
+    inline BasicBlock* GetTrueSuccessor()  { return mTrueSuccessor; }
+    inline BasicBlock* GetFalseSuccessor() { return mFalseSuccessor; }
+    inline std::pair<BasicBlock*, BasicBlock*> GetSuccessors() const { return std::make_pair(mTrueSuccessor, mFalseSuccessor); }
+
+    inline void SetSuccessor(BasicBlock* succ)      { mTrueSuccessor = succ; }
+    inline void SetTrueSuccessor(BasicBlock* succ)  { mTrueSuccessor = succ; }
+    inline void SetFalseSuccessor(BasicBlock* succ) { mFalseSuccessor = succ; }
 
     inline void Print(std::ostream& out) const {
         out << GetName() << ":";
         if (mPredecessors.size() > 0) {
             out << " (preds: ";
-            for (size_t i = 0; i < mPredecessors.size(); ++i) {
-                if (i > 0) {
+            for (auto it = mPredecessors.begin(), end = mPredecessors.end(); it != end; ++it) {
+                if (it != mPredecessors.begin()) {
                     out << ", ";
                 }
-                out << mPredecessors[i]->GetName();
+                out << (*it)->GetName();
             }
             out << ")";
         }
         out << "\n";
 
-        for (const auto* inst : mInstructions) {
+        Instruction* inst = mFirstInst;
+        while (inst != nullptr) {
             out << "    " << inst->GetAsString() << "\n";
+            inst = inst->GetNext();
         }
     }
 
     inline bool IsValid() const {
-        if (mParentFunction == nullptr || mId == -1 || mInstructions.size() == 0) {
+        if (mParentFunction == nullptr || mId == -1 || mFirstInst == nullptr) {
             return false;
         }
-        if (!IsInstructionTerminator(mInstructions.back()->GetType())) {
+        if (!mLastInst->IsTerminator()) {
             return false;
         }
-        for (const auto* inst : mInstructions) {
+
+        Instruction* inst = mFirstInst;
+        while (inst != nullptr) {
             if (!inst->IsValid()) {
                 return false;
             }
+            inst = inst->GetNext();
         }
         return true;
     }
@@ -80,10 +193,17 @@ private:
     const Function* mParentFunction{nullptr};
     BasicBlockId mId{-1};
     std::string mName{};
-    std::vector<Instruction*> mInstructions{};
 
-    std::vector<const BasicBlock*> mPredecessors{};
-    std::vector<const BasicBlock*> mSuccessors{};
+    // A basic block contains first and last element of linked list of instruction
+    Instruction* mFirstInst{};
+    Instruction* mLastInst{};
+    size_t mSize{0};
+
+    std::set<BasicBlock*> mPredecessors{};
+
+    // True successor is also unconditional successor for Jump instruction
+    BasicBlock* mTrueSuccessor{nullptr};
+    BasicBlock* mFalseSuccessor{nullptr};
 };
 
 }   // namespace VMIR

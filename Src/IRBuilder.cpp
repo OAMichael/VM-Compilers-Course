@@ -7,9 +7,7 @@ IRBuilder::IRBuilder() {}
 
 
 Function* IRBuilder::CreateFunction(const std::string& name) {
-    Function* func = new Function(name);
-    mFunctions.push_back(func);
-    return func;
+    return CreateFunction(ValueType::Void, name);
 }
 
 Function* IRBuilder::CreateFunction(const ValueType retType, const std::string& name) {
@@ -19,9 +17,7 @@ Function* IRBuilder::CreateFunction(const ValueType retType, const std::string& 
 }
 
 Function* IRBuilder::CreateFunction(const std::vector<ValueType>& argsTypes, const std::string& name) {
-    Function* func = new Function(argsTypes, name);
-    mFunctions.push_back(func);
-    return func;
+    return CreateFunction(ValueType::Void, argsTypes, name);
 }
 
 Function* IRBuilder::CreateFunction(const ValueType retType, const std::vector<ValueType>& argsTypes, const std::string& name) {
@@ -54,37 +50,12 @@ BasicBlock* IRBuilder::CreateBasicBlock(Function* parentFunction, const std::str
     return bb;
 }
 
-BasicBlock* IRBuilder::CreateBasicBlock(std::vector<Instruction*>& instructions) {
-    return CreateBasicBlock(instructions, nullptr, "");
-}
-
-BasicBlock* IRBuilder::CreateBasicBlock(const std::vector<Instruction*>& instructions, Function* parentFunction) {
-    return CreateBasicBlock(instructions, parentFunction, "");
-}
-
-BasicBlock* IRBuilder::CreateBasicBlock(const std::vector<Instruction*>& instructions, const std::string& name) {
-    return CreateBasicBlock(instructions, nullptr, name);
-}
-
-BasicBlock* IRBuilder::CreateBasicBlock(const std::vector<Instruction*>& instructions, Function* parentFunction, const std::string& name) {
-    BasicBlockId id = mBasicBlocks.size();
-    BasicBlock* bb = new BasicBlock(instructions, parentFunction, id, name);
-    if (parentFunction != nullptr) {
-        parentFunction->AppendBasicBlock(bb);
-    }
-    for (auto& inst : instructions) {
-        inst->SetParentBasicBlock(bb);
-    }
-    mBasicBlocks.push_back(bb);
-    return bb;
-}
-
 
 InstructionAdd* IRBuilder::CreateAdd() {
     return CreateAdd(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionAdd* IRBuilder::CreateAdd(const Value* input1, const Value* input2, const Value* output) {
+InstructionAdd* IRBuilder::CreateAdd(Value* input1, Value* input2, Value* output) {
     return CreateAdd(nullptr, input1, input2, output);
 }
 
@@ -92,13 +63,22 @@ InstructionAdd* IRBuilder::CreateAdd(BasicBlock* parentBasicBlock) {
     return CreateAdd(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionAdd* IRBuilder::CreateAdd(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionAdd* inst = new InstructionAdd(input1, input2, output);
+InstructionAdd* IRBuilder::CreateAdd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionAdd* inst = new InstructionAdd(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -107,7 +87,7 @@ InstructionSub* IRBuilder::CreateSub() {
     return CreateSub(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionSub* IRBuilder::CreateSub(const Value* input1, const Value* input2, const Value* output) {
+InstructionSub* IRBuilder::CreateSub(Value* input1, Value* input2, Value* output) {
     return CreateSub(nullptr, input1, input2, output);
 }
 
@@ -115,13 +95,22 @@ InstructionSub* IRBuilder::CreateSub(BasicBlock* parentBasicBlock) {
     return CreateSub(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionSub* IRBuilder::CreateSub(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionSub* inst = new InstructionSub(input1, input2, output);
+InstructionSub* IRBuilder::CreateSub(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionSub* inst = new InstructionSub(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -130,7 +119,7 @@ InstructionMul* IRBuilder::CreateMul() {
     return CreateMul(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionMul* IRBuilder::CreateMul(const Value* input1, const Value* input2, const Value* output) {
+InstructionMul* IRBuilder::CreateMul(Value* input1, Value* input2, Value* output) {
     return CreateMul(nullptr, input1, input2, output);
 }
 
@@ -138,13 +127,22 @@ InstructionMul* IRBuilder::CreateMul(BasicBlock* parentBasicBlock) {
     return CreateMul(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionMul* IRBuilder::CreateMul(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionMul* inst = new InstructionMul(input1, input2, output);
+InstructionMul* IRBuilder::CreateMul(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionMul* inst = new InstructionMul(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -153,7 +151,7 @@ InstructionDiv* IRBuilder::CreateDiv() {
     return CreateDiv(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionDiv* IRBuilder::CreateDiv(const Value* input1, const Value* input2, const Value* output) {
+InstructionDiv* IRBuilder::CreateDiv(Value* input1, Value* input2, Value* output) {
     return CreateDiv(nullptr, input1, input2, output);
 }
 
@@ -161,13 +159,22 @@ InstructionDiv* IRBuilder::CreateDiv(BasicBlock* parentBasicBlock) {
     return CreateDiv(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionDiv* IRBuilder::CreateDiv(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionDiv* inst = new InstructionDiv(input1, input2, output);
+InstructionDiv* IRBuilder::CreateDiv(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionDiv* inst = new InstructionDiv(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -176,7 +183,7 @@ InstructionRem* IRBuilder::CreateRem() {
     return CreateRem(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionRem* IRBuilder::CreateRem(const Value* input1, const Value* input2, const Value* output) {
+InstructionRem* IRBuilder::CreateRem(Value* input1, Value* input2, Value* output) {
     return CreateRem(nullptr, input1, input2, output);
 }
 
@@ -184,13 +191,22 @@ InstructionRem* IRBuilder::CreateRem(BasicBlock* parentBasicBlock) {
     return CreateRem(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionRem* IRBuilder::CreateRem(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionRem* inst = new InstructionRem(input1, input2, output);
+InstructionRem* IRBuilder::CreateRem(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionRem* inst = new InstructionRem(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -199,7 +215,7 @@ InstructionAnd* IRBuilder::CreateAnd() {
     return CreateAnd(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionAnd* IRBuilder::CreateAnd(const Value* input1, const Value* input2, const Value* output) {
+InstructionAnd* IRBuilder::CreateAnd(Value* input1, Value* input2, Value* output) {
     return CreateAnd(nullptr, input1, input2, output);
 }
 
@@ -207,13 +223,22 @@ InstructionAnd* IRBuilder::CreateAnd(BasicBlock* parentBasicBlock) {
     return CreateAnd(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionAnd* IRBuilder::CreateAnd(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionAnd* inst = new InstructionAnd(input1, input2, output);
+InstructionAnd* IRBuilder::CreateAnd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionAnd* inst = new InstructionAnd(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -222,7 +247,7 @@ InstructionOr* IRBuilder::CreateOr() {
     return CreateOr(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionOr* IRBuilder::CreateOr(const Value* input1, const Value* input2, const Value* output) {
+InstructionOr* IRBuilder::CreateOr(Value* input1, Value* input2, Value* output) {
     return CreateOr(nullptr, input1, input2, output);
 }
 
@@ -230,13 +255,22 @@ InstructionOr* IRBuilder::CreateOr(BasicBlock* parentBasicBlock) {
     return CreateOr(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionOr* IRBuilder::CreateOr(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionOr* inst = new InstructionOr(input1, input2, output);
+InstructionOr* IRBuilder::CreateOr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionOr* inst = new InstructionOr(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -245,7 +279,7 @@ InstructionXor* IRBuilder::CreateXor() {
     return CreateXor(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionXor* IRBuilder::CreateXor(const Value* input1, const Value* input2, const Value* output) {
+InstructionXor* IRBuilder::CreateXor(Value* input1, Value* input2, Value* output) {
     return CreateXor(nullptr, input1, input2, output);
 }
 
@@ -253,13 +287,22 @@ InstructionXor* IRBuilder::CreateXor(BasicBlock* parentBasicBlock) {
     return CreateXor(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionXor* IRBuilder::CreateXor(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionXor* inst = new InstructionXor(input1, input2, output);
+InstructionXor* IRBuilder::CreateXor(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionXor* inst = new InstructionXor(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -268,7 +311,7 @@ InstructionShl* IRBuilder::CreateShl() {
     return CreateShl(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionShl* IRBuilder::CreateShl(const Value* input1, const Value* input2, const Value* output) {
+InstructionShl* IRBuilder::CreateShl(Value* input1, Value* input2, Value* output) {
     return CreateShl(nullptr, input1, input2, output);
 }
 
@@ -276,13 +319,22 @@ InstructionShl* IRBuilder::CreateShl(BasicBlock* parentBasicBlock) {
     return CreateShl(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionShl* IRBuilder::CreateShl(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionShl* inst = new InstructionShl(input1, input2, output);
+InstructionShl* IRBuilder::CreateShl(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionShl* inst = new InstructionShl(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -291,7 +343,7 @@ InstructionShr* IRBuilder::CreateShr() {
     return CreateShr(nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionShr* IRBuilder::CreateShr(const Value* input1, const Value* input2, const Value* output) {
+InstructionShr* IRBuilder::CreateShr(Value* input1, Value* input2, Value* output) {
     return CreateShr(nullptr, input1, input2, output);
 }
 
@@ -299,13 +351,22 @@ InstructionShr* IRBuilder::CreateShr(BasicBlock* parentBasicBlock) {
     return CreateShr(parentBasicBlock, nullptr, nullptr, nullptr);
 }
 
-InstructionShr* IRBuilder::CreateShr(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionShr* inst = new InstructionShr(input1, input2, output);
+InstructionShr* IRBuilder::CreateShr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionShr* inst = new InstructionShr(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -314,7 +375,7 @@ InstructionLoad* IRBuilder::CreateLoad() {
     return CreateLoad(nullptr, nullptr, nullptr);
 }
 
-InstructionLoad* IRBuilder::CreateLoad(const Value* loadPtr, const Value* output) {
+InstructionLoad* IRBuilder::CreateLoad(Value* loadPtr, Value* output) {
     return CreateLoad(nullptr, loadPtr, output);
 }
 
@@ -322,13 +383,19 @@ InstructionLoad* IRBuilder::CreateLoad(BasicBlock* parentBasicBlock) {
     return CreateLoad(parentBasicBlock, nullptr, nullptr);
 }
 
-InstructionLoad* IRBuilder::CreateLoad(BasicBlock* parentBasicBlock, const Value* loadPtr, const Value* output) {
-    InstructionLoad* inst = new InstructionLoad(loadPtr, output);
+InstructionLoad* IRBuilder::CreateLoad(BasicBlock* parentBasicBlock, Value* loadPtr, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionLoad* inst = new InstructionLoad(id, loadPtr, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (loadPtr != nullptr) {
+        loadPtr->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -337,7 +404,7 @@ InstructionStore* IRBuilder::CreateStore() {
     return CreateStore(nullptr, nullptr, nullptr);
 }
 
-InstructionStore* IRBuilder::CreateStore(const Value* storePtr, const Value* input) {
+InstructionStore* IRBuilder::CreateStore(Value* storePtr, Value* input) {
     return CreateStore(nullptr, storePtr, input);
 }
 
@@ -345,13 +412,19 @@ InstructionStore* IRBuilder::CreateStore(BasicBlock* parentBasicBlock) {
     return CreateStore(parentBasicBlock, nullptr, nullptr);
 }
 
-InstructionStore* IRBuilder::CreateStore(BasicBlock* parentBasicBlock, const Value* storePtr, const Value* input) {
-    InstructionStore* inst = new InstructionStore(storePtr, input);
+InstructionStore* IRBuilder::CreateStore(BasicBlock* parentBasicBlock, Value* storePtr, Value* input) {
+    InstructionId id = mInstructions.size();
+    InstructionStore* inst = new InstructionStore(id, storePtr, input);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (storePtr != nullptr) {
+        storePtr->AddUser(inst);
+    }
+    if (input != nullptr) {
+        input->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -365,16 +438,16 @@ InstructionJump* IRBuilder::CreateJump(BasicBlock* parentBasicBlock) {
 }
 
 InstructionJump* IRBuilder::CreateJump(BasicBlock* parentBasicBlock, BasicBlock *jumpBB) {
-    InstructionJump* inst = new InstructionJump(jumpBB);
+    InstructionId id = mInstructions.size();
+    InstructionJump* inst = new InstructionJump(id, jumpBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (jumpBB != nullptr) {
-            parentBasicBlock->AddSuccessor(jumpBB);
+            parentBasicBlock->SetSuccessor(jumpBB);
             jumpBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -383,7 +456,7 @@ InstructionBeq* IRBuilder::CreateBeq() {
     return CreateBeq(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBeq* IRBuilder::CreateBeq(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBeq* IRBuilder::CreateBeq(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBeq(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -391,21 +464,27 @@ InstructionBeq* IRBuilder::CreateBeq(BasicBlock* parentBasicBlock) {
     return CreateBeq(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBeq* IRBuilder::CreateBeq(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBeq* inst = new InstructionBeq(input1, input2, trueBB, falseBB);
+InstructionBeq* IRBuilder::CreateBeq(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBeq* inst = new InstructionBeq(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -414,7 +493,7 @@ InstructionBne* IRBuilder::CreateBne() {
     return CreateBne(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBne* IRBuilder::CreateBne(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBne* IRBuilder::CreateBne(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBne(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -422,21 +501,27 @@ InstructionBne* IRBuilder::CreateBne(BasicBlock* parentBasicBlock) {
     return CreateBne(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBne* IRBuilder::CreateBne(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBne* inst = new InstructionBne(input1, input2, trueBB, falseBB);
+InstructionBne* IRBuilder::CreateBne(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBne* inst = new InstructionBne(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -445,7 +530,7 @@ InstructionBgt* IRBuilder::CreateBgt() {
     return CreateBgt(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBgt* IRBuilder::CreateBgt(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBgt* IRBuilder::CreateBgt(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBgt(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -453,21 +538,27 @@ InstructionBgt* IRBuilder::CreateBgt(BasicBlock* parentBasicBlock) {
     return CreateBgt(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBgt* IRBuilder::CreateBgt(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBgt* inst = new InstructionBgt(input1, input2, trueBB, falseBB);
+InstructionBgt* IRBuilder::CreateBgt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBgt* inst = new InstructionBgt(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -476,7 +567,7 @@ InstructionBlt* IRBuilder::CreateBlt() {
     return CreateBlt(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBlt* IRBuilder::CreateBlt(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBlt* IRBuilder::CreateBlt(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBlt(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -484,21 +575,27 @@ InstructionBlt* IRBuilder::CreateBlt(BasicBlock* parentBasicBlock) {
     return CreateBlt(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBlt* IRBuilder::CreateBlt(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBlt* inst = new InstructionBlt(input1, input2, trueBB, falseBB);
+InstructionBlt* IRBuilder::CreateBlt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBlt* inst = new InstructionBlt(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -507,7 +604,7 @@ InstructionBge* IRBuilder::CreateBge() {
     return CreateBge(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBge* IRBuilder::CreateBge(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBge* IRBuilder::CreateBge(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBge(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -515,21 +612,27 @@ InstructionBge* IRBuilder::CreateBge(BasicBlock* parentBasicBlock) {
     return CreateBge(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBge* IRBuilder::CreateBge(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBge* inst = new InstructionBge(input1, input2, trueBB, falseBB);
+InstructionBge* IRBuilder::CreateBge(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBge* inst = new InstructionBge(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -538,7 +641,7 @@ InstructionBle* IRBuilder::CreateBle() {
     return CreateBle(nullptr, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBle* IRBuilder::CreateBle(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+InstructionBle* IRBuilder::CreateBle(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
     return CreateBle(nullptr, input1, input2, trueBB, falseBB);
 }
 
@@ -546,21 +649,27 @@ InstructionBle* IRBuilder::CreateBle(BasicBlock* parentBasicBlock) {
     return CreateBle(parentBasicBlock, nullptr, nullptr, nullptr, nullptr);
 }
 
-InstructionBle* IRBuilder::CreateBle(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionBle* inst = new InstructionBle(input1, input2, trueBB, falseBB);
+InstructionBle* IRBuilder::CreateBle(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
+    InstructionId id = mInstructions.size();
+    InstructionBle* inst = new InstructionBle(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
         if (trueBB != nullptr) {
-            parentBasicBlock->AddSuccessor(trueBB);
+            parentBasicBlock->SetTrueSuccessor(trueBB);
             trueBB->AddPredecessor(parentBasicBlock);
         }
         if (falseBB != nullptr) {
-            parentBasicBlock->AddSuccessor(falseBB);
+            parentBasicBlock->SetFalseSuccessor(falseBB);
             falseBB->AddPredecessor(parentBasicBlock);
         }
     }
-    mInstructions.push_back(inst);
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -569,19 +678,19 @@ InstructionCall* IRBuilder::CreateCall() {
     return CreateCall(nullptr, nullptr, nullptr);
 }
 
-InstructionCall* IRBuilder::CreateCall(const Function* function) {
+InstructionCall* IRBuilder::CreateCall(Function* function) {
     return CreateCall(nullptr, function, nullptr);
 }
 
-InstructionCall* IRBuilder::CreateCall(const Function* function, const Value* ret) {
+InstructionCall* IRBuilder::CreateCall(Function* function, Value* ret) {
     return CreateCall(nullptr, function, ret);
 }
 
-InstructionCall* IRBuilder::CreateCall(const Function* function, const std::vector<const Value*>& args) {
+InstructionCall* IRBuilder::CreateCall(Function* function, const std::vector<Value*>& args) {
     return CreateCall(nullptr, function, nullptr, args);
 }
 
-InstructionCall* IRBuilder::CreateCall(const Function* function, const Value* ret, const std::vector<const Value*>& args) {
+InstructionCall* IRBuilder::CreateCall(Function* function, Value* ret, const std::vector<Value*>& args) {
     return CreateCall(nullptr, function, ret, args);
 }
 
@@ -589,31 +698,40 @@ InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock) {
     return CreateCall(parentBasicBlock, nullptr, nullptr);
 }
 
-InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, const Function* function) {
+InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function) {
     return CreateCall(parentBasicBlock, function, nullptr);
 }
 
-InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, const Function* function, const Value* ret) {
-    InstructionCall* inst = new InstructionCall(function, ret);
+InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret) {
+    InstructionId id = mInstructions.size();
+    InstructionCall* inst = new InstructionCall(id, function, ret);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (ret != nullptr) {
+        ret->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
-InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, const Function* function, const std::vector<const Value*>& args) {
+InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function, const std::vector<Value*>& args) {
     return CreateCall(parentBasicBlock, function, nullptr, args);
 }
 
-InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, const Function* function, const Value* ret, const std::vector<const Value*>& args) {
-    InstructionCall* inst = new InstructionCall(function, ret, args);
+InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret, const std::vector<Value*>& args) {
+    InstructionId id = mInstructions.size();
+    InstructionCall* inst = new InstructionCall(id, function, ret, args);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    for (auto* a : args) {
+        a->AddUser(inst);
+    }
+    if (ret != nullptr) {
+        ret->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -622,7 +740,7 @@ InstructionRet* IRBuilder::CreateRet() {
     return CreateRet(nullptr, nullptr);
 }
 
-InstructionRet* IRBuilder::CreateRet(const Value* output) {
+InstructionRet* IRBuilder::CreateRet(Value* output) {
     return CreateRet(nullptr, output);
 }
 
@@ -630,13 +748,16 @@ InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock) {
     return CreateRet(parentBasicBlock, nullptr);
 }
 
-InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, const Value* output) {
-    InstructionRet* inst = new InstructionRet(output);
+InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionRet* inst = new InstructionRet(id, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (output != nullptr) {
+        output->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
@@ -645,11 +766,11 @@ InstructionAlloc* IRBuilder::CreateAlloc() {
     return CreateAlloc(nullptr, nullptr, 1);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(const Value* output) {
+InstructionAlloc* IRBuilder::CreateAlloc(Value* output) {
     return CreateAlloc(nullptr, output, 1);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(const Value* output, const size_t count) {
+InstructionAlloc* IRBuilder::CreateAlloc(Value* output, const size_t count) {
     return CreateAlloc(nullptr, output, count);
 }
 
@@ -657,46 +778,123 @@ InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock) {
     return CreateAlloc(parentBasicBlock, nullptr, 1);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, const Value* output) {
+InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output) {
     return CreateAlloc(parentBasicBlock, output, 1);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, const Value* output, const size_t count) {
-    InstructionAlloc* inst = new InstructionAlloc(output, count);
+InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output, const size_t count) {
+    InstructionId id = mInstructions.size();
+    InstructionAlloc* inst = new InstructionAlloc(id, output, count);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
 
 InstructionPhi* IRBuilder::CreatePhi() {
-    return CreatePhi(nullptr, nullptr, nullptr, nullptr);
+    return CreatePhi(nullptr, {}, nullptr);
 }
 
-InstructionPhi* IRBuilder::CreatePhi(const Value* input1, const Value* input2, const Value* output) {
-    return CreatePhi(nullptr, input1, input2, output);
+InstructionPhi* IRBuilder::CreatePhi(const std::set<Value*>& inputs, Value* output) {
+    return CreatePhi(nullptr, inputs, output);
 }
 
 InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock) {
-    return CreatePhi(parentBasicBlock, nullptr, nullptr, nullptr);
+    return CreatePhi(parentBasicBlock, {}, nullptr);
 }
 
-InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output) {
-    InstructionPhi* inst = new InstructionPhi(input1, input2, output);
+InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const std::set<Value*>& inputs, Value* output) {
+    InstructionId id = mInstructions.size();
+    InstructionPhi* inst = new InstructionPhi(id, inputs, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
-        inst->SetParentBasicBlock(parentBasicBlock);
     }
-    mInstructions.push_back(inst);
+    for (auto* i : inputs) {
+        i->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
     return inst;
 }
 
 
 IRBuilder::~IRBuilder() {
     Cleanup();
+}
+
+
+void IRBuilder::PrintDebug(std::ostream& out) const {
+    for (auto* f : mFunctions) {
+        out << "Function: " << f->GetName() << std::endl;
+
+        out << "    Predecessors:" << std::endl;
+        for (const auto* bb : mBasicBlocks) {
+            if (bb->GetParentFunction() != f) {
+                continue;
+            }
+
+            for (const auto* pred : bb->GetPredecessors()) {
+                out << "        " << pred->GetName() << " -> " << bb->GetName() << std::endl;
+            }
+        }
+        out << "\n";
+
+        out << "    Successors:" << std::endl;
+        for (const auto* bb : mBasicBlocks) {
+            if (bb->GetParentFunction() != f) {
+                continue;
+            }
+
+            auto [trueSucc, falseSucc] = bb->GetSuccessors();
+            if (trueSucc) {
+                out << "        " << bb->GetName() << " -> " << trueSucc->GetName() << std::endl;
+            }
+            if (falseSucc) {
+                out << "        " << bb->GetName() << " -> " << falseSucc->GetName() << std::endl;
+            }
+        }
+        out << "\n";
+
+        out << "    Users:" << std::endl;
+        for (const auto* v : mValuesWithData.at(f)) {
+            for (const auto* i : v->GetUsers()) {
+                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]" << std::endl;
+            }
+        }
+        for (const auto* v : mValues.at(f)) {
+            for (const auto* i : v->GetUsers()) {
+                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]" << std::endl;
+            }
+        }
+        out << "\n";
+
+        out << "    Producers:" << std::endl;
+        for (const auto* v : mValuesWithData.at(f)) {
+            Instruction* prod = v->GetProducer();
+            if (prod != nullptr) {
+                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]" << std::endl;
+            }
+            else {
+                out << "        " << v->GetValueStr() << " -> null" << std::endl;
+            }
+        }
+        for (const auto* v : mValues.at(f)) {
+            Instruction* prod = v->GetProducer();
+            if (prod != nullptr) {
+                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]" << std::endl;
+            }
+            else {
+                out << "        " << v->GetValueStr() << " -> null" << std::endl;
+            }
+        }
+    }
 }
 
 }   // namespace VMIR

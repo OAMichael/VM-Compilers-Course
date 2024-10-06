@@ -16,9 +16,9 @@ bool ControlFlowGraph::GenerateDotFile(const std::string& filename) {
     out << "    edge[color=\"#242038\"]\n";
 
     for (const auto* bb : mGraph) {
-        const auto& succs = bb->GetSuccessors();
-        for (const auto* succ : succs) {
-            out << "    " << bb->GetName() + "->" + succ->GetName() << "\n";
+        const auto& preds = bb->GetPredecessors();
+        for (const auto* pred : preds) {
+            out << "    " << pred->GetName() << "->" << bb->GetName() << "\n";
         }
     }
 

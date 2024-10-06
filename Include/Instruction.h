@@ -71,57 +71,38 @@ static inline const char *InstructionTypeToStr(const InstructionType it) {
 }
 
 
-static inline bool IsInstructionTerminator(const InstructionType it) {
-    switch (it) {
-        default:
-        case InstructionType::Unknown:
-        case InstructionType::Add:
-        case InstructionType::Sub:
-        case InstructionType::Mul:
-        case InstructionType::Div:
-        case InstructionType::Rem:
-        case InstructionType::And:
-        case InstructionType::Or:
-        case InstructionType::Xor:
-        case InstructionType::Shl:
-        case InstructionType::Shr:
-        case InstructionType::Load:
-        case InstructionType::Store:
-        case InstructionType::Call:
-        case InstructionType::Alloc:
-        case InstructionType::Phi: {
-            return false;
-        }
-        case InstructionType::Jump:
-        case InstructionType::Beq:
-        case InstructionType::Bne:
-        case InstructionType::Bgt:
-        case InstructionType::Blt:
-        case InstructionType::Bge:
-        case InstructionType::Ble:
-        case InstructionType::Ret: {
-            return true;
-        }
-    }
-}
-
-
 // Base interface for all instructions
 class Instruction {
 public:
-    Instruction(const InstructionType type) : mType{type} {};
+    Instruction(const InstructionType type, const InstructionId id) : mType{type}, mId{id} {};
 
     virtual ~Instruction() {};
 
     virtual std::string GetAsString() const = 0;
     virtual bool IsValid() const = 0;
+    virtual bool IsTerminator() const { return false; }
 
     inline InstructionType GetType() const { return mType; }
-    inline void SetParentBasicBlock(const BasicBlock* parentBasicBlock) { mParentBasicBlock = parentBasicBlock; }
+
+    inline InstructionId GetId() const { return mId; }
+    inline void SetId(const InstructionId id) { mId = id; }
+
+    inline BasicBlock* GetParentBasicBlock() const { return mParentBasicBlock; }
+    inline void SetParentBasicBlock(BasicBlock* parentBasicBlock) { mParentBasicBlock = parentBasicBlock; }
+
+    inline Instruction* GetPrev() const { return mPrev; }
+    inline void SetPrev(Instruction* prev) { mPrev = prev; }
+
+    inline Instruction* GetNext() const { return mNext; }
+    inline void SetNext(Instruction* next) { mNext = next; }
 
 protected:
     InstructionType mType{};
-    const BasicBlock* mParentBasicBlock{nullptr};
+    InstructionId mId{-1};
+    BasicBlock* mParentBasicBlock{nullptr};
+
+    Instruction* mPrev{};
+    Instruction* mNext{};
 };
 
 
@@ -129,28 +110,28 @@ protected:
 class InstructionArithmetic : public Instruction {
 public:
     // Constructors
-    InstructionArithmetic(const InstructionType type) : Instruction(type) {};
+    InstructionArithmetic(const InstructionType type, const InstructionId id) : Instruction(type, id) {};
 
-    InstructionArithmetic(const InstructionType type, const Value* input1, const Value* input2, const Value* output) 
-    : Instruction(type), mInput1{input1}, mInput2{input2}, mOutput{output} {};
+    InstructionArithmetic(const InstructionType type, const InstructionId id, Value* input1, Value* input2, Value* output)
+    : Instruction(type, id), mInput1{input1}, mInput2{input2}, mOutput{output} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Value* GetInput1() const { return mInput1; }
-    inline const Value* GetInput2() const { return mInput2; }
-    inline const Value* GetOutput() const { return mOutput; }
+    inline Value* GetInput1() { return mInput1; }
+    inline Value* GetInput2() { return mInput2; }
+    inline Value* GetOutput() { return mOutput; }
 
     // Setters
-    inline void SetInput1(const Value* value) { mInput1 = value; }
-    inline void SetInput2(const Value* value) { mInput2 = value; }
-    inline void SetOutput(const Value* value) { mOutput = value; }
+    inline void SetInput1(Value* value) { mInput1 = value; }
+    inline void SetInput2(Value* value) { mInput2 = value; }
+    inline void SetOutput(Value* value) { mOutput = value; }
 
 protected:
-    const Value* mInput1;
-    const Value* mInput2;
-    const Value* mOutput;
+    Value* mInput1;
+    Value* mInput2;
+    Value* mOutput;
 };
 
 
@@ -160,46 +141,46 @@ protected:
 class InstructionAdd final : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionAdd() : InstructionArithmetic(InstructionType::Add) {};
+    InstructionAdd(const InstructionId id) : InstructionArithmetic(InstructionType::Add, id) {};
 
-    InstructionAdd(const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(InstructionType::Add, input1, input2, output) {};
+    InstructionAdd(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(InstructionType::Add, id, input1, input2, output) {};
 };
 
 class InstructionSub final : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionSub() : InstructionArithmetic(InstructionType::Sub) {};
+    InstructionSub(const InstructionId id) : InstructionArithmetic(InstructionType::Sub, id) {};
 
-    InstructionSub(const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(InstructionType::Sub, input1, input2, output) {};
+    InstructionSub(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(InstructionType::Sub, id, input1, input2, output) {};
 };
 
 class InstructionMul final : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionMul() : InstructionArithmetic(InstructionType::Mul) {};
+    InstructionMul(const InstructionId id) : InstructionArithmetic(InstructionType::Mul, id) {};
 
-    InstructionMul(const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(InstructionType::Mul, input1, input2, output) {};
+    InstructionMul(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(InstructionType::Mul, id, input1, input2, output) {};
 };
 
 class InstructionDiv final : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionDiv() : InstructionArithmetic(InstructionType::Div) {};
+    InstructionDiv(const InstructionId id) : InstructionArithmetic(InstructionType::Div, id) {};
 
-    InstructionDiv(const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(InstructionType::Div, input1, input2, output) {};
+    InstructionDiv(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(InstructionType::Div, id, input1, input2, output) {};
 };
 
 class InstructionRem final : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionRem() : InstructionArithmetic(InstructionType::Rem) {};
+    InstructionRem(const InstructionId id) : InstructionArithmetic(InstructionType::Rem, id) {};
 
-    InstructionRem(const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(InstructionType::Rem, input1, input2, output) {};
+    InstructionRem(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(InstructionType::Rem, id, input1, input2, output) {};
 };
 
 
@@ -209,10 +190,10 @@ public:
 class InstructionBitwise : public InstructionArithmetic {
 public:
     // Constructors
-    InstructionBitwise(const InstructionType type) : InstructionArithmetic(type) {};
+    InstructionBitwise(const InstructionType type, const InstructionId id) : InstructionArithmetic(type, id) {};
 
-    InstructionBitwise(const InstructionType type, const Value* input1, const Value* input2, const Value* output)
-    : InstructionArithmetic(type, input1, input2, output) {};
+    InstructionBitwise(const InstructionType type, const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionArithmetic(type, id, input1, input2, output) {};
 
     // Validity rules for bitwise instructions are stricter
     virtual bool IsValid() const override;
@@ -222,46 +203,46 @@ public:
 class InstructionAnd final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionAnd() : InstructionBitwise(InstructionType::And) {};
+    InstructionAnd(const InstructionId id) : InstructionBitwise(InstructionType::And, id) {};
 
-    InstructionAnd(const Value* input1, const Value* input2, const Value* output)
-    : InstructionBitwise(InstructionType::And, input1, input2, output) {};
+    InstructionAnd(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::And, id, input1, input2, output) {};
 };
 
 class InstructionOr final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionOr() : InstructionBitwise(InstructionType::And) {};
+    InstructionOr(const InstructionId id) : InstructionBitwise(InstructionType::And, id) {};
 
-    InstructionOr(const Value* input1, const Value* input2, const Value* output)
-    : InstructionBitwise(InstructionType::And, input1, input2, output) {};
+    InstructionOr(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::And, id, input1, input2, output) {};
 };
 
 class InstructionXor final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionXor() : InstructionBitwise(InstructionType::And) {};
+    InstructionXor(const InstructionId id) : InstructionBitwise(InstructionType::And, id) {};
 
-    InstructionXor(const Value* input1, const Value* input2, const Value* output)
-    : InstructionBitwise(InstructionType::And, input1, input2, output) {};
+    InstructionXor(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::And, id, input1, input2, output) {};
 };
 
 class InstructionShl final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionShl() : InstructionBitwise(InstructionType::Shl) {};
+    InstructionShl(const InstructionId id) : InstructionBitwise(InstructionType::Shl, id) {};
 
-    InstructionShl(const Value* input1, const Value* input2, const Value* output)
-    : InstructionBitwise(InstructionType::Shl, input1, input2, output) {};
+    InstructionShl(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::Shl, id, input1, input2, output) {};
 };
 
 class InstructionShr final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionShr() : InstructionBitwise(InstructionType::Shr) {};
+    InstructionShr(const InstructionId id) : InstructionBitwise(InstructionType::Shr, id) {};
 
-    InstructionShr(const Value* input1, const Value* input2, const Value* output)
-    : InstructionBitwise(InstructionType::Shr, input1, input2, output) {};
+    InstructionShr(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::Shr, id, input1, input2, output) {};
 };
 
 
@@ -271,50 +252,50 @@ public:
 class InstructionLoad final : public Instruction {
 public:
     // Constructors
-    InstructionLoad() : Instruction(InstructionType::Load) {};
+    InstructionLoad(const InstructionId id) : Instruction(InstructionType::Load, id) {};
 
-    InstructionLoad(const Value* loadPtr, const Value* output) 
-    : Instruction(InstructionType::Load), mLoadPtr{loadPtr}, mOutput{output} {};
+    InstructionLoad(const InstructionId id, Value* loadPtr, Value* output)
+    : Instruction(InstructionType::Load, id), mLoadPtr{loadPtr}, mOutput{output} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Value* GetLoadPtr() const { return mLoadPtr; }
-    inline const Value* GetOutput() const { return mOutput; }
+    inline Value* GetLoadPtr() { return mLoadPtr; }
+    inline Value* GetOutput()  { return mOutput; }
 
     // Setters
-    inline void SetLoadPtr(const Value* value) { mLoadPtr = value; }
-    inline void SetOutput(const Value* value) { mOutput = value; }
+    inline void SetLoadPtr(Value* value) { mLoadPtr = value; }
+    inline void SetOutput(Value* value)  { mOutput = value; }
 
 private:
-    const Value* mLoadPtr;
-    const Value* mOutput;
+    Value* mLoadPtr;
+    Value* mOutput;
 };
 
 
 class InstructionStore final : public Instruction {
 public:
     // Constructors
-    InstructionStore() : Instruction(InstructionType::Store) {};
+    InstructionStore(const InstructionId id) : Instruction(InstructionType::Store, id) {};
 
-    InstructionStore(const Value* storePtr, const Value* input) 
-    : Instruction(InstructionType::Store), mStorePtr{storePtr}, mInput{input} {};
+    InstructionStore(const InstructionId id, Value* storePtr, Value* input)
+    : Instruction(InstructionType::Store, id), mStorePtr{storePtr}, mInput{input} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Value* GetStorePtr() const { return mStorePtr; }
-    inline const Value* GetInput() const { return mInput; }
+    inline Value* GetStorePtr() { return mStorePtr; }
+    inline Value* GetInput()    { return mInput; }
 
     // Setters
-    inline void SetStorePtr(const Value* value) { mStorePtr = value; }
-    inline void SetInput(const Value* value) { mInput = value; }
+    inline void SetStorePtr(Value* value) { mStorePtr = value; }
+    inline void SetInput(Value* value)    { mInput = value; }
 
 private:
-    const Value* mStorePtr;
-    const Value* mInput;
+    Value* mStorePtr;
+    Value* mInput;
 };
 
 
@@ -324,21 +305,23 @@ private:
 class InstructionJump final : public Instruction {
 public:
     // Constructors
-    InstructionJump() : Instruction(InstructionType::Jump) {};
+    InstructionJump(const InstructionId id) : Instruction(InstructionType::Jump, id) {};
 
-    InstructionJump(const BasicBlock *pJumpBB) : Instruction(InstructionType::Jump), mJumpBB{pJumpBB} {};
+    InstructionJump(const InstructionId id, BasicBlock *pJumpBB) : Instruction(InstructionType::Jump, id), mJumpBB{pJumpBB} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
+    virtual bool IsTerminator() const override { return true; }
 
     // Getters
     inline const BasicBlock *GetJumpBasicBlock() const { return mJumpBB; }
+    inline BasicBlock *GetJumpBasicBlock() { return mJumpBB; }
 
     // Setters
-    inline void SetJumpBasicBlock(const BasicBlock *pJumpBB) { mJumpBB = pJumpBB; }
+    inline void SetJumpBasicBlock(BasicBlock *pJumpBB) { mJumpBB = pJumpBB; }
 
 private:
-    const BasicBlock *mJumpBB{nullptr};
+    BasicBlock *mJumpBB{nullptr};
 };
 
 
@@ -348,83 +331,87 @@ private:
 class InstructionBranch : public Instruction {
 public:
     // Constructors
-    InstructionBranch(const InstructionType type) : Instruction(type) {};
+    InstructionBranch(const InstructionType type, const InstructionId id) : Instruction(type, id) {};
 
-    InstructionBranch(const InstructionType type, const Value* input1, const Value* input2, const BasicBlock *pTrueBB, const BasicBlock *pFalseBB)
-    : Instruction(type), mInput1{input1}, mInput2{input2}, mTrueBB{pTrueBB}, mFalseBB{pFalseBB} {};
+    InstructionBranch(const InstructionType type, const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB, BasicBlock *pFalseBB)
+    : Instruction(type, id), mInput1{input1}, mInput2{input2}, mTrueBB{pTrueBB}, mFalseBB{pFalseBB} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
+    virtual bool IsTerminator() const override { return true; }
 
     // Getters
-    inline const Value* GetInput1() const { return mInput1; }
-    inline const Value* GetInput2() const { return mInput2; }
+    inline Value* GetInput1() { return mInput1; }
+    inline Value* GetInput2() { return mInput2; }
 
     inline const BasicBlock *GetTrueBasicBlock()  const { return mTrueBB; }
     inline const BasicBlock *GetFalseBasicBlock() const { return mFalseBB; }
 
-    // Setters
-    inline void SetInput1(const Value* value) { mInput1 = value; }
-    inline void SetInput2(const Value* value) { mInput2 = value; }
+    inline BasicBlock *GetTrueBasicBlock()  { return mTrueBB; }
+    inline BasicBlock *GetFalseBasicBlock() { return mFalseBB; }
 
-    inline void SetTrueBasicBlock(const BasicBlock *pTrueBB) { mTrueBB = pTrueBB; }
-    inline void SetFalseBasicBlock(const BasicBlock *pFalseBB) { mFalseBB = pFalseBB; }
+    // Setters
+    inline void SetInput1(Value* value) { mInput1 = value; }
+    inline void SetInput2(Value* value) { mInput2 = value; }
+
+    inline void SetTrueBasicBlock(BasicBlock *pTrueBB) { mTrueBB = pTrueBB; }
+    inline void SetFalseBasicBlock(BasicBlock *pFalseBB) { mFalseBB = pFalseBB; }
 
 private:
-    const Value* mInput1;
-    const Value* mInput2;
+    Value* mInput1;
+    Value* mInput2;
 
-    const BasicBlock *mTrueBB{nullptr};
-    const BasicBlock *mFalseBB{nullptr};
+    BasicBlock *mTrueBB{nullptr};
+    BasicBlock *mFalseBB{nullptr};
 };
 
 
 class InstructionBeq final : public InstructionBranch {
 public:
-    InstructionBeq() : InstructionBranch(InstructionType::Beq) {};
+    InstructionBeq(const InstructionId id) : InstructionBranch(InstructionType::Beq, id) {};
 
-    InstructionBeq(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Beq, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBeq(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Beq, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 class InstructionBne final : public InstructionBranch {
 public:
-    InstructionBne() : InstructionBranch(InstructionType::Bne) {};
+    InstructionBne(const InstructionId id) : InstructionBranch(InstructionType::Bne, id) {};
 
-    InstructionBne(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Bne, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBne(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Bne, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 class InstructionBgt final : public InstructionBranch {
 public:
-    InstructionBgt() : InstructionBranch(InstructionType::Bgt) {};
+    InstructionBgt(const InstructionId id) : InstructionBranch(InstructionType::Bgt, id) {};
 
-    InstructionBgt(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Bgt, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBgt(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Bgt, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 class InstructionBlt final : public InstructionBranch {
 public:
-    InstructionBlt() : InstructionBranch(InstructionType::Blt) {};
+    InstructionBlt(const InstructionId id) : InstructionBranch(InstructionType::Blt, id) {};
 
-    InstructionBlt(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Blt, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBlt(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Blt, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 class InstructionBge final : public InstructionBranch {
 public:
-    InstructionBge() : InstructionBranch(InstructionType::Bge) {};
+    InstructionBge(const InstructionId id) : InstructionBranch(InstructionType::Bge, id) {};
 
-    InstructionBge(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Bge, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBge(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Bge, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 class InstructionBle final : public InstructionBranch {
 public:
-    InstructionBle() : InstructionBranch(InstructionType::Ble) {};
+    InstructionBle(const InstructionId id) : InstructionBranch(InstructionType::Ble, id) {};
 
-    InstructionBle(const Value* input1, const Value* input2, const BasicBlock *pTrueBB = nullptr, const BasicBlock *pFalseBB = nullptr)
-    : InstructionBranch(InstructionType::Ble, input1, input2, pTrueBB, pFalseBB) {};
+    InstructionBle(const InstructionId id, Value* input1, Value* input2, BasicBlock *pTrueBB = nullptr, BasicBlock *pFalseBB = nullptr)
+    : InstructionBranch(InstructionType::Ble, id, input1, input2, pTrueBB, pFalseBB) {};
 };
 
 
@@ -434,36 +421,36 @@ public:
 class InstructionCall final : public Instruction {
 public:
     // Constructors
-    InstructionCall() : Instruction(InstructionType::Call) {};
-    InstructionCall(const Function* function) : Instruction(InstructionType::Call), mFunction{function} {};
+    InstructionCall(const InstructionId id) : Instruction(InstructionType::Call, id) {};
+    InstructionCall(const InstructionId id, Function* function) : Instruction(InstructionType::Call, id), mFunction{function} {};
     
-    InstructionCall(const Function* function, const Value* ret)
-    : Instruction(InstructionType::Call), mFunction{function}, mOutput{ret} {};
+    InstructionCall(const InstructionId id, Function* function, Value* ret)
+    : Instruction(InstructionType::Call, id), mFunction{function}, mOutput{ret} {};
     
-    InstructionCall(const Function* function, const std::vector<const Value*>& args)
-    : Instruction(InstructionType::Call), mFunction{function}, mInputs{args} {};
+    InstructionCall(const InstructionId id, Function* function, const std::vector<Value*>& args)
+    : Instruction(InstructionType::Call, id), mFunction{function}, mInputs{args} {};
     
-    InstructionCall(const Function* function, const Value* ret, const std::vector<const Value*>& args)
-    : Instruction(InstructionType::Call), mFunction{function}, mOutput{ret}, mInputs{args} {};
+    InstructionCall(const InstructionId id, Function* function, Value* ret, const std::vector<Value*>& args)
+    : Instruction(InstructionType::Call, id), mFunction{function}, mOutput{ret}, mInputs{args} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Function* GetFunction() const { return mFunction; }
-    inline const Value* GetReturnValue() const { return mOutput; }
-    inline const std::vector<const Value*>& GetArguments() const { return mInputs; }
+    inline Function* GetFunction() { return mFunction; }
+    inline Value* GetReturnValue() { return mOutput; }
+    inline const std::vector<Value*>& GetArguments() const { return mInputs; }
 
     // Setters
-    inline void SetFunction(const Function* function) { mFunction = function; }
-    inline void SetReturnValue(const Value* value) { mOutput = value; }
-    inline void SetArguments(const std::vector<const Value*>& args) { mInputs = args; }
+    inline void SetFunction(Function* function) { mFunction = function; }
+    inline void SetReturnValue(Value* value) { mOutput = value; }
+    inline void SetArguments(const std::vector<Value*>& args) { mInputs = args; }
 
 private:
-    const Function* mFunction{nullptr};
+    Function* mFunction{nullptr};
 
-    const Value* mOutput{nullptr};
-    std::vector<const Value*> mInputs{};
+    Value* mOutput{nullptr};
+    std::vector<Value*> mInputs{};
 };
 
 
@@ -473,20 +460,21 @@ private:
 class InstructionRet final : public Instruction {
 public:
     // Constructors
-    InstructionRet() : Instruction(InstructionType::Ret) {};
-    InstructionRet(const Value* output) : Instruction(InstructionType::Ret), mOutput{output} {};
+    InstructionRet(const InstructionId id) : Instruction(InstructionType::Ret, id) {};
+    InstructionRet(const InstructionId id, Value* output) : Instruction(InstructionType::Ret, id), mOutput{output} {};
     
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
+    virtual bool IsTerminator() const override { return true; }
 
     // Getters
-    inline const Value* GetOutput() const { return mOutput; }
+    inline Value* GetOutput() { return mOutput; }
 
     // Setters
-    inline void SetOutput(const Value* output) { mOutput = output; }
+    inline void SetOutput(Value* output) { mOutput = output; }
 
 private:
-    const Value* mOutput{nullptr};
+    Value* mOutput{nullptr};
 };
 
 
@@ -496,23 +484,24 @@ private:
 class InstructionAlloc final : public Instruction {
 public:
     // Constructors
-    InstructionAlloc() : Instruction(InstructionType::Alloc) {};
-    InstructionAlloc(const Value* output) : Instruction(InstructionType::Alloc), mOutput{output} {};
-    InstructionAlloc(const Value* output, const size_t count) : Instruction(InstructionType::Alloc), mOutput{output}, mCount{count} {};
+    InstructionAlloc(const InstructionId id) : Instruction(InstructionType::Alloc, id) {};
+    InstructionAlloc(const InstructionId id, Value* output) : Instruction(InstructionType::Alloc, id), mOutput{output} {};
+    InstructionAlloc(const InstructionId id, Value* output, const size_t count)
+    : Instruction(InstructionType::Alloc, id), mOutput{output}, mCount{count} {};
     
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Value* GetOutput() const { return mOutput; }
+    inline Value* GetOutput() { return mOutput; }
     inline size_t GetCount() const { return mCount; }
 
     // Setters
-    inline void SetOutput(const Value* output) { mOutput = output; }
+    inline void SetOutput(Value* output) { mOutput = output; }
     inline void SetCount(const size_t count) { mCount = count; }
 
 private:
-    const Value* mOutput;
+    Value* mOutput;
     size_t mCount{1};
 };
 
@@ -523,27 +512,28 @@ private:
 class InstructionPhi final : public Instruction {
 public:
     // Constructors
-    InstructionPhi() : Instruction(InstructionType::Phi) {};
-    InstructionPhi(const Value* input1, const Value* input2, const Value* output)
-    : Instruction(InstructionType::Phi), mInput1{input1}, mInput2{input2}, mOutput{output} {};
+    InstructionPhi(const InstructionId id) : Instruction(InstructionType::Phi, id) {};
+    InstructionPhi(const InstructionId id, const std::set<Value*>& inputs, Value* output)
+    : Instruction(InstructionType::Phi, id), mInputs{inputs}, mOutput{output} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
 
     // Getters
-    inline const Value* GetInput1() const { return mInput1; }
-    inline const Value* GetInput2() const { return mInput2; }
-    inline const Value* GetOutput() const { return mOutput; }
+    inline const std::set<Value*>& GetInputs() const { return mInputs; }
+    inline Value* GetOutput() { return mOutput; }
 
     // Setters
-    inline void SetInput1(const Value* value) { mInput1 = value; }
-    inline void SetInput2(const Value* value) { mInput2 = value; }
-    inline void SetOutput(const Value* value) { mOutput = value; }
+    inline void SetInputs(const std::set<Value*>& inputs) { mInputs = inputs; }
+    inline void AddInput(Value* input)       { mInputs.insert(input); }
+    inline bool HasInput(Value* input) const { return mInputs.contains(input); }
+    inline void RemoveInput(Value* input)    { mInputs.erase(input); }
+
+    inline void SetOutput(Value* value) { mOutput = value; }
 
 private:
-    const Value* mInput1;
-    const Value* mInput2;
-    const Value* mOutput;
+    std::set<Value*> mInputs{};
+    Value* mOutput;
 };
 
 }   // namespace VMIR

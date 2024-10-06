@@ -14,7 +14,7 @@ std::string InstructionArithmetic::GetAsString() const {
 }
 
 bool InstructionArithmetic::IsValid() const {
-    return mParentBasicBlock != nullptr
+    return mId != -1 && mParentBasicBlock != nullptr
         && mInput1 != nullptr && mInput2 != nullptr && mOutput != nullptr
         && mInput1->IsValid() && mInput2->IsValid() && mOutput->IsValid()
         && mInput1->GetValueType() == mInput2->GetValueType()
@@ -39,7 +39,7 @@ std::string InstructionLoad::GetAsString() const {
 }
 
 bool InstructionLoad::IsValid() const {
-    return mParentBasicBlock != nullptr
+    return mId != -1 && mParentBasicBlock != nullptr
         && mLoadPtr != nullptr && mOutput != nullptr
         && mLoadPtr->IsValid() && mOutput->IsValid()
         && mLoadPtr->GetValueType() == ValueType::Pointer;
@@ -54,7 +54,7 @@ std::string InstructionStore::GetAsString() const {
 }
 
 bool InstructionStore::IsValid() const {
-    return mParentBasicBlock != nullptr
+    return mId != -1 && mParentBasicBlock != nullptr
         && mStorePtr != nullptr && mInput != nullptr
         && mStorePtr->IsValid() && mInput->IsValid()
         && mStorePtr->GetValueType() == ValueType::Pointer;
@@ -66,7 +66,7 @@ std::string InstructionJump::GetAsString() const {
 }
 
 bool InstructionJump::IsValid() const {
-    return mParentBasicBlock != nullptr && mJumpBB != nullptr;
+    return mId != -1 && mParentBasicBlock != nullptr && mJumpBB != nullptr;
 }
 
 
@@ -81,7 +81,7 @@ std::string InstructionBranch::GetAsString() const {
 }
 
 bool InstructionBranch::IsValid() const {
-    return mParentBasicBlock != nullptr
+    return mId != -1 && mParentBasicBlock != nullptr
         && mInput1 != nullptr && mInput2 != nullptr
         && mInput1->IsValid() && mInput2->IsValid()
         && mInput1->GetValueType() == mInput2->GetValueType()
@@ -118,6 +118,10 @@ std::string InstructionCall::GetAsString() const {
 
 
 bool InstructionCall::IsValid() const {
+    if (mId == -1) {
+        return false;
+    }
+
     if (mFunction == nullptr) {
         return false;
     }
@@ -130,7 +134,7 @@ bool InstructionCall::IsValid() const {
         return false;
     }
 
-    if (mFunction->GetArgsTypes().size() != mInputs.size()) {
+    if (mFunction->GetArgs().size() != mInputs.size()) {
         return false;
     }
 
@@ -158,6 +162,10 @@ std::string InstructionRet::GetAsString() const {
 }
 
 bool InstructionRet::IsValid() const {
+    if (mId == -1) {
+        return false;
+    }
+
     if (mParentBasicBlock == nullptr) {
         return false;
     }
@@ -166,7 +174,7 @@ bool InstructionRet::IsValid() const {
         return false;
     }
 
-    if ((mParentBasicBlock->GetParentFunction()->GetReturnType().has_value()) != (mOutput != nullptr)) {
+    if ((mParentBasicBlock->GetParentFunction()->GetReturnType() != ValueType::Void) != (mOutput != nullptr)) {
         return false;
     }
 
@@ -193,26 +201,55 @@ std::string InstructionAlloc::GetAsString() const {
 }
 
 bool InstructionAlloc::IsValid() const {
-    return mParentBasicBlock != nullptr
+    return mId != -1 && mParentBasicBlock != nullptr
         && mOutput != nullptr && mOutput->IsValid()
         && mOutput->GetValueType() == ValueType::Pointer && mCount > 0;
 }
 
 
 std::string InstructionPhi::GetAsString() const {
-    const std::string in1Name = mInput1->GetValueStr();
-    const std::string in2Name = mInput2->GetValueStr();
+    std::string outStr = "";
     const std::string outName = mOutput->GetValueStr();
-    const std::string idStr = ValueTypeToIdStr(mInput1->GetValueType());
-    return outName + " = Phi " + idStr + " " + in1Name + ", " + in2Name;
+    const std::string idStr = ValueTypeToIdStr(mOutput->GetValueType());
+
+    outStr = outName + " = Phi " + idStr + " ";
+    for (auto it = mInputs.begin(), end = mInputs.end(); it != end; ++it) {
+        if (it != mInputs.begin()) {
+            outStr += ", ";
+        }
+        outStr += (*it)->GetValueStr();
+    }
+
+    return outStr;
 }
 
 bool InstructionPhi::IsValid() const {
-    return mParentBasicBlock != nullptr
-        && mInput1 != nullptr && mInput2 != nullptr && mOutput != nullptr
-        && mInput1->IsValid() && mInput2->IsValid() && mOutput->IsValid()
-        && mInput1->GetValueType() == mInput2->GetValueType()
-        && mInput1->GetValueType() == mOutput->GetValueType();    
+    if (mId == -1) {
+        return false;
+    }
+
+    if (mParentBasicBlock == nullptr) {
+        return false;
+    }
+
+    if (mOutput == nullptr || mInputs.size() < 2) {
+        return false;
+    }
+
+    if (!mOutput->IsValid()) {
+        return false;
+    }
+
+    for (auto* i : mInputs) {
+        if (!i->IsValid()) {
+            return false;
+        }
+        if (i->GetValueType() != mOutput->GetValueType()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 

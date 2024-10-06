@@ -8,7 +8,7 @@ namespace VMIR {
 class Function {
 public:
     // Constructors
-    Function(const std::string& name = "") : mName{name} {};
+    Function(const std::string& name = "") : mName{name}, mRetType{ValueType::Void} {};
     Function(const ValueType retType, const std::string& name = "") : mName{name}, mRetType{retType} {};
 
     Function(const std::vector<ValueType>& argsTypes, const std::string& name = "");
@@ -18,10 +18,9 @@ public:
     inline std::string GetName() const { return mName; }
 
     inline std::optional<ValueType> GetReturnType() const { return mRetType; }
-    inline const std::vector<ValueType>& GetArgsTypes() const { return mArgsTypes; }
     inline const std::vector<Value*>& GetArgs() const { return mArgs; }
-    inline const ValueType& GetArgType(const size_t idx) const { return mArgsTypes[idx]; }
     inline const Value* GetArg(const size_t idx) const { return mArgs[idx]; }
+    inline Value* GetArg(const size_t idx) { return mArgs[idx]; }
 
     inline const std::vector<BasicBlock*>& GetBasicBlocks() const { return mBasicBlocks; }
     inline BasicBlock* GetBasicBlock(const size_t idx) const { return mBasicBlocks[idx]; }
@@ -34,13 +33,7 @@ public:
     inline void AppendBasicBlock(BasicBlock* basicBlock) { mBasicBlocks.push_back(basicBlock); }
 
     inline void Print(std::ostream& out) const {
-        out << "function ";
-        if (mRetType.has_value()) {
-            out << ValueTypeToIdStr(*mRetType) << " ";
-        }
-        else {
-            out << "void ";
-        }
+        out << "function " << ValueTypeToIdStr(mRetType) << " ";
 
         out << "#" << GetName() << "(";
         for (size_t i = 0; i < mArgs.size(); ++i) {
@@ -76,8 +69,7 @@ public:
 
 private:
     std::string mName{};
-    std::optional<ValueType> mRetType{std::nullopt};
-    std::vector<ValueType> mArgsTypes{};
+    ValueType mRetType{ValueType::Unknown};
     std::vector<Value*> mArgs{};
     std::vector<BasicBlock*> mBasicBlocks{};
 };

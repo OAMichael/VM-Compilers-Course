@@ -6,11 +6,13 @@
 #include <variant>
 #include <string>
 #include <optional>
+#include <set>
 
 namespace VMIR {
 
 enum class ValueType {
-    Int8 = 0,
+    Void = 0,
+    Int8,
     Int16,
     Int32,
     Int64,
@@ -25,28 +27,11 @@ enum class ValueType {
     Unknown
 };
 
-static inline const char *ValueTypeToStr(const ValueType vt) {
-    switch (vt) {
-        default:
-        case ValueType::Unknown:    return "Unknown";
-        case ValueType::Int8:       return "Int8";
-        case ValueType::Int16:      return "Int16";
-        case ValueType::Int32:      return "Int32";
-        case ValueType::Int64:      return "Int64";
-        case ValueType::Uint8:      return "Uint8";
-        case ValueType::Uint16:     return "Uint16";
-        case ValueType::Uint32:     return "Uint32";
-        case ValueType::Uint64:     return "Uint64";
-        case ValueType::Float32:    return "Float32";
-        case ValueType::Float64:    return "Float64";
-        case ValueType::Pointer:    return "Pointer";
-    }
-}
-
 static inline const char *ValueTypeToIdStr(const ValueType vt) {
     switch (vt) {
         default:
         case ValueType::Unknown:    return "vt-unknown?";
+        case ValueType::Void:       return "void";
         case ValueType::Int8:       return "i8";
         case ValueType::Int16:      return "i16";
         case ValueType::Int32:      return "i32";
@@ -69,29 +54,32 @@ concept NumericType = requires(T n) {
 
 
 template <typename T, typename U>
-constexpr bool is_same_no_cv_v() {
-    return std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<U>>;
+constexpr bool is_same_no_cvref_v() {
+    return std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 }
 
 
 template <typename T>
 constexpr ValueType TypeToValueType() {
-    if constexpr (is_same_no_cv_v<T, int8_t>())     return ValueType::Int8;
-    if constexpr (is_same_no_cv_v<T, int16_t>())    return ValueType::Int16;
-    if constexpr (is_same_no_cv_v<T, int32_t>())    return ValueType::Int32;
-    if constexpr (is_same_no_cv_v<T, int64_t>())    return ValueType::Int64;
-    if constexpr (is_same_no_cv_v<T, uint8_t>())    return ValueType::Uint8;
-    if constexpr (is_same_no_cv_v<T, uint16_t>())   return ValueType::Uint16;
-    if constexpr (is_same_no_cv_v<T, uint32_t>())   return ValueType::Uint32;
-    if constexpr (is_same_no_cv_v<T, uint64_t>())   return ValueType::Uint64;
-    if constexpr (is_same_no_cv_v<T, float>())      return ValueType::Float32;
-    if constexpr (is_same_no_cv_v<T, double>())     return ValueType::Float64;
-    if constexpr (std::is_pointer_v<T>)             return ValueType::Pointer;
+    if constexpr (is_same_no_cvref_v<T, int8_t>())     return ValueType::Int8;
+    if constexpr (is_same_no_cvref_v<T, int16_t>())    return ValueType::Int16;
+    if constexpr (is_same_no_cvref_v<T, int32_t>())    return ValueType::Int32;
+    if constexpr (is_same_no_cvref_v<T, int64_t>())    return ValueType::Int64;
+    if constexpr (is_same_no_cvref_v<T, uint8_t>())    return ValueType::Uint8;
+    if constexpr (is_same_no_cvref_v<T, uint16_t>())   return ValueType::Uint16;
+    if constexpr (is_same_no_cvref_v<T, uint32_t>())   return ValueType::Uint32;
+    if constexpr (is_same_no_cvref_v<T, uint64_t>())   return ValueType::Uint64;
+    if constexpr (is_same_no_cvref_v<T, float>())      return ValueType::Float32;
+    if constexpr (is_same_no_cvref_v<T, double>())     return ValueType::Float64;
+    if constexpr (std::is_pointer_v<T>)                return ValueType::Pointer;
     return ValueType::Unknown;
 }
 
+class Instruction;
 
 using ValueId = int64_t;
+using InstructionId = int64_t;
+using BasicBlockId = int64_t;
 
 class Value {
 public:
@@ -106,7 +94,7 @@ public:
 
     template <typename T>
     requires NumericType<T>
-    explicit Value(const ValueType vt, const ValueId id, const T value) : mValueType{vt}, mValue{value}, mId{id} {};
+    explicit Value(const ValueId id, const T value) : mValueType{TypeToValueType<T>()}, mValue{value}, mId{id} {};
 
     // Operators
     Value& operator=(const Value& other) {
@@ -151,6 +139,14 @@ public:
 
     inline ValueId GetId() const { return mId; }
 
+    inline void AddUser(Instruction* u)                   { mUsers.insert(u); }
+    inline bool HasUser(Instruction* u) const             { return mUsers.contains(u); }
+    inline void RemoveUser(Instruction* u)                { mUsers.erase(u); }
+    inline const std::set<Instruction*>& GetUsers() const { return mUsers; }
+
+    inline Instruction* GetProducer() const { return mProducer; }
+    inline void SetProducer(Instruction* prod) { mProducer = prod; }
+
     inline std::string GetValueStr() const {
         if (HasValue()) {
             switch (GetValueType()) {
@@ -180,6 +176,9 @@ private:
                   uint8_t, uint16_t, uint32_t, uint64_t, float, double>> mValue{};
 
     ValueId mId{-1};
+
+    std::set<Instruction*> mUsers{};
+    Instruction* mProducer{};
 };
 
 }   // namespace VMIR

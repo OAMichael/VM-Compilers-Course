@@ -14,18 +14,18 @@ int main() {
     VMIR::BasicBlock* LoopBodyBB        = IrBuilder->CreateBasicBlock(Fact, "LoopBody");
     VMIR::BasicBlock* LoopExitBB        = IrBuilder->CreateBasicBlock(Fact, "LoopExit");
 
-    const VMIR::Value* zero = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64, 0ULL);
-    const VMIR::Value* one  = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64, 1ULL);
-    const VMIR::Value* two  = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64, 2ULL);
+    VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0UL);
+    VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1UL);
+    VMIR::Value* two  = IrBuilder->CreateValue(Fact, 2UL);
 
-    const VMIR::Value* v0 = Fact->GetArg(0);
-    const VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v4 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v5 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v6 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    const VMIR::Value* v7 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = Fact->GetArg(0);
+    VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
 
     // EntryBB
     IrBuilder->CreateAdd(EntryBB, zero, one, v1);
@@ -36,17 +36,17 @@ int main() {
     IrBuilder->CreateJump(LoopPreheaderBB, LoopHeaderBB);
 
     // LoopHeaderBB
-    IrBuilder->CreatePhi(LoopHeaderBB, v2, v6, v3);
+    IrBuilder->CreatePhi(LoopHeaderBB, {v2, v6}, v3);
     IrBuilder->CreateBgt(LoopHeaderBB, v3, v0, LoopExitBB, LoopBodyBB);
 
     // LoopBodyBB
-    IrBuilder->CreatePhi(LoopBodyBB, v1, v5, v4);
+    IrBuilder->CreatePhi(LoopBodyBB, {v1, v5}, v4);
     IrBuilder->CreateMul(LoopBodyBB, v4, v3, v5);
     IrBuilder->CreateAdd(LoopBodyBB, v3, one, v6);
     IrBuilder->CreateJump(LoopBodyBB, LoopHeaderBB);
 
     // LoopExitBB
-    IrBuilder->CreatePhi(LoopExitBB, v1, v5, v7);
+    IrBuilder->CreatePhi(LoopExitBB, {v1, v5}, v7);
     IrBuilder->CreateRet(LoopExitBB, v7);
 
     // Check validity

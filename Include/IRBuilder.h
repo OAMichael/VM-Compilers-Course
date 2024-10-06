@@ -38,10 +38,6 @@ public:
     BasicBlock* CreateBasicBlock(Function* parentFunction);
     BasicBlock* CreateBasicBlock(const std::string& name);
     BasicBlock* CreateBasicBlock(Function* parentFunction, const std::string& name);
-    BasicBlock* CreateBasicBlock(std::vector<Instruction*>& instructions);
-    BasicBlock* CreateBasicBlock(const std::vector<Instruction*>& instructions, Function* parentFunction);
-    BasicBlock* CreateBasicBlock(const std::vector<Instruction*>& instructions, const std::string& name);
-    BasicBlock* CreateBasicBlock(const std::vector<Instruction*>& instructions, Function* parentFunction, const std::string& name);
 
 
     inline Value* CreateValue(Function* parentFunction, const ValueType vt) {
@@ -63,7 +59,7 @@ public:
 
     template <typename T>
     requires NumericType<T>
-    inline Value* CreateValue(Function* parentFunction, const ValueType vt, const T value) {
+    inline Value* CreateValue(Function* parentFunction, const T value) {
         if (parentFunction == nullptr) {
             return nullptr;
         }
@@ -75,133 +71,133 @@ public:
         auto it = mValuesWithData.find(parentFunction);
         auto& funcValues = it->second;
 
-        Value* v = new Value(vt, funcValues.size(), value);
+        Value* v = new Value(funcValues.size(), value);
         funcValues.push_back(v);
         return v;
     }
 
 
     InstructionAdd* CreateAdd();
-    InstructionAdd* CreateAdd(const Value* input1, const Value* input2, const Value* output);
+    InstructionAdd* CreateAdd(Value* input1, Value* input2, Value* output);
     InstructionAdd* CreateAdd(BasicBlock* parentBasicBlock);
-    InstructionAdd* CreateAdd(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionAdd* CreateAdd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionSub* CreateSub();
-    InstructionSub* CreateSub(const Value* input1, const Value* input2, const Value* output);
+    InstructionSub* CreateSub(Value* input1, Value* input2, Value* output);
     InstructionSub* CreateSub(BasicBlock* parentBasicBlock);
-    InstructionSub* CreateSub(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionSub* CreateSub(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionMul* CreateMul();
-    InstructionMul* CreateMul(const Value* input1, const Value* input2, const Value* output);
+    InstructionMul* CreateMul(Value* input1, Value* input2, Value* output);
     InstructionMul* CreateMul(BasicBlock* parentBasicBlock);
-    InstructionMul* CreateMul(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionMul* CreateMul(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionDiv* CreateDiv();
-    InstructionDiv* CreateDiv(const Value* input1, const Value* input2, const Value* output);
+    InstructionDiv* CreateDiv(Value* input1, Value* input2, Value* output);
     InstructionDiv* CreateDiv(BasicBlock* parentBasicBlock);
-    InstructionDiv* CreateDiv(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionDiv* CreateDiv(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionRem* CreateRem();
-    InstructionRem* CreateRem(const Value* input1, const Value* input2, const Value* output);
+    InstructionRem* CreateRem(Value* input1, Value* input2, Value* output);
     InstructionRem* CreateRem(BasicBlock* parentBasicBlock);
-    InstructionRem* CreateRem(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionRem* CreateRem(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionAnd* CreateAnd();
-    InstructionAnd* CreateAnd(const Value* input1, const Value* input2, const Value* output);
+    InstructionAnd* CreateAnd(Value* input1, Value* input2, Value* output);
     InstructionAnd* CreateAnd(BasicBlock* parentBasicBlock);
-    InstructionAnd* CreateAnd(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionAnd* CreateAnd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionOr* CreateOr();
-    InstructionOr* CreateOr(const Value* input1, const Value* input2, const Value* output);
+    InstructionOr* CreateOr(Value* input1, Value* input2, Value* output);
     InstructionOr* CreateOr(BasicBlock* parentBasicBlock);
-    InstructionOr* CreateOr(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionOr* CreateOr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionXor* CreateXor();
-    InstructionXor* CreateXor(const Value* input1, const Value* input2, const Value* output);
+    InstructionXor* CreateXor(Value* input1, Value* input2, Value* output);
     InstructionXor* CreateXor(BasicBlock* parentBasicBlock);
-    InstructionXor* CreateXor(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionXor* CreateXor(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionShl* CreateShl();
-    InstructionShl* CreateShl(const Value* input1, const Value* input2, const Value* output);
+    InstructionShl* CreateShl(Value* input1, Value* input2, Value* output);
     InstructionShl* CreateShl(BasicBlock* parentBasicBlock);
-    InstructionShl* CreateShl(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionShl* CreateShl(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionShr* CreateShr();
-    InstructionShr* CreateShr(const Value* input1, const Value* input2, const Value* output);
+    InstructionShr* CreateShr(Value* input1, Value* input2, Value* output);
     InstructionShr* CreateShr(BasicBlock* parentBasicBlock);
-    InstructionShr* CreateShr(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionShr* CreateShr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionLoad* CreateLoad();
-    InstructionLoad* CreateLoad(const Value* loadPtr, const Value* output);
+    InstructionLoad* CreateLoad(Value* loadPtr, Value* output);
     InstructionLoad* CreateLoad(BasicBlock* parentBasicBlock);
-    InstructionLoad* CreateLoad(BasicBlock* parentBasicBlock, const Value* loadPtr, const Value* output);
+    InstructionLoad* CreateLoad(BasicBlock* parentBasicBlock, Value* loadPtr, Value* output);
 
     InstructionStore* CreateStore();
-    InstructionStore* CreateStore(const Value* storePtr, const Value* input);
+    InstructionStore* CreateStore(Value* storePtr, Value* input);
     InstructionStore* CreateStore(BasicBlock* parentBasicBlock);
-    InstructionStore* CreateStore(BasicBlock* parentBasicBlock, const Value* storePtr, const Value* input);
+    InstructionStore* CreateStore(BasicBlock* parentBasicBlock, Value* storePtr, Value* input);
 
     InstructionJump* CreateJump();
     InstructionJump* CreateJump(BasicBlock* parentBasicBlock);
     InstructionJump* CreateJump(BasicBlock* parentBasicBlock, BasicBlock *jumpBB);
 
     InstructionBeq* CreateBeq();
-    InstructionBeq* CreateBeq(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBeq* CreateBeq(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBeq* CreateBeq(BasicBlock* parentBasicBlock);
-    InstructionBeq* CreateBeq(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBeq* CreateBeq(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionBne* CreateBne();
-    InstructionBne* CreateBne(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBne* CreateBne(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBne* CreateBne(BasicBlock* parentBasicBlock);
-    InstructionBne* CreateBne(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBne* CreateBne(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionBgt* CreateBgt();
-    InstructionBgt* CreateBgt(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBgt* CreateBgt(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBgt* CreateBgt(BasicBlock* parentBasicBlock);
-    InstructionBgt* CreateBgt(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBgt* CreateBgt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionBlt* CreateBlt();
-    InstructionBlt* CreateBlt(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBlt* CreateBlt(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBlt* CreateBlt(BasicBlock* parentBasicBlock);
-    InstructionBlt* CreateBlt(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBlt* CreateBlt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionBge* CreateBge();
-    InstructionBge* CreateBge(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBge* CreateBge(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBge* CreateBge(BasicBlock* parentBasicBlock);
-    InstructionBge* CreateBge(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBge* CreateBge(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionBle* CreateBle();
-    InstructionBle* CreateBle(const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBle* CreateBle(Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
     InstructionBle* CreateBle(BasicBlock* parentBasicBlock);
-    InstructionBle* CreateBle(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
+    InstructionBle* CreateBle(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB);
 
     InstructionCall* CreateCall();
-    InstructionCall* CreateCall(const Function* function);
-    InstructionCall* CreateCall(const Function* function, const Value* ret);
-    InstructionCall* CreateCall(const Function* function, const std::vector<const Value*>& args);
-    InstructionCall* CreateCall(const Function* function, const Value* ret, const std::vector<const Value*>& args);
+    InstructionCall* CreateCall(Function* function);
+    InstructionCall* CreateCall(Function* function, Value* ret);
+    InstructionCall* CreateCall(Function* function, const std::vector<Value*>& args);
+    InstructionCall* CreateCall(Function* function, Value* ret, const std::vector<Value*>& args);
     InstructionCall* CreateCall(BasicBlock* parentBasicBlock);
-    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, const Function* function);
-    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, const Function* function, const Value* ret);
-    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, const Function* function, const std::vector<const Value*>& args);
-    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, const Function* function, const Value* ret, const std::vector<const Value*>& args);
+    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, Function* function);
+    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret);
+    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, Function* function, const std::vector<Value*>& args);
+    InstructionCall* CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret, const std::vector<Value*>& args);
 
     InstructionRet* CreateRet();
-    InstructionRet* CreateRet(const Value* output);
+    InstructionRet* CreateRet(Value* output);
     InstructionRet* CreateRet(BasicBlock* parentBasicBlock);
-    InstructionRet* CreateRet(BasicBlock* parentBasicBlock, const Value* output);
+    InstructionRet* CreateRet(BasicBlock* parentBasicBlock, Value* output);
 
     InstructionAlloc* CreateAlloc();
-    InstructionAlloc* CreateAlloc(const Value* output);
-    InstructionAlloc* CreateAlloc(const Value* output, const size_t count);
+    InstructionAlloc* CreateAlloc(Value* output);
+    InstructionAlloc* CreateAlloc(Value* output, const size_t count);
     InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock);
-    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, const Value* output);
-    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, const Value* output, const size_t count);
+    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, Value* output);
+    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, Value* output, const size_t count);
 
     InstructionPhi* CreatePhi();
-    InstructionPhi* CreatePhi(const Value* input1, const Value* input2, const Value* output);
+    InstructionPhi* CreatePhi(const std::set<Value*>& inputs, Value* output);
     InstructionPhi* CreatePhi(BasicBlock* parentBasicBlock);
-    InstructionPhi* CreatePhi(BasicBlock* parentBasicBlock, const Value* input1, const Value* input2, const Value* output);
+    InstructionPhi* CreatePhi(BasicBlock* parentBasicBlock, const std::set<Value*>& inputs, Value* output);
 
 
     inline ControlFlowGraph* CreateControlFlowGraph(Function* function) {
@@ -222,11 +218,11 @@ public:
                 delete vv;
             }
         }
+        for (const auto& i : mInstructions) {
+            delete i.second;
+        }
         for (const auto* b : mBasicBlocks) {
             delete b;
-        }
-        for (const auto* i : mInstructions) {
-            delete i;
         }
         for (const auto* f : mFunctions) {
             delete f;
@@ -234,12 +230,15 @@ public:
         for (const auto& cfg : mGraphs) {
             delete cfg.second;
         }
-    } 
+    }
+
+    void PrintDebug(std::ostream& out) const;
 
 private:
-    std::vector<Instruction*> mInstructions{};
     std::vector<BasicBlock*> mBasicBlocks{};
     std::vector<Function*> mFunctions{};
+
+    std::unordered_map<InstructionId, Instruction*> mInstructions{};
 
     // Deliberately differentiate between Values with no data and Values with data
     std::unordered_map<Function*, std::vector<Value*>> mValues{};
