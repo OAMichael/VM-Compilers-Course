@@ -3,7 +3,7 @@
 ## How to build
 #### First, clone the repository:
 ```
-git clone https://github.com/OAMichael/VM-Compilers-Course.git
+git clone https://github.com/OAMichael/VM-Compilers-Course.git --recursive
 ```
 
 #### Second, run cmake:

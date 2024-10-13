@@ -4,6 +4,15 @@
 
 namespace VMIR {
 
+bool Instruction::IsDominatedBy(Instruction* inst) {
+    BasicBlock* instBB = inst->GetParentBasicBlock();
+    if (mParentBasicBlock != instBB) {
+        return mParentBasicBlock->IsDominatedBy(instBB);
+    }
+    return mParentBasicBlock->IndexOfInstruction(inst) > mParentBasicBlock->IndexOfInstruction(this);
+}
+
+
 std::string InstructionArithmetic::GetAsString() const {
     const std::string in1Name = mInput1->GetValueStr();
     const std::string in2Name = mInput2->GetValueStr();

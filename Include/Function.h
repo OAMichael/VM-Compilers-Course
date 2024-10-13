@@ -24,11 +24,13 @@ public:
 
     inline const std::vector<BasicBlock*>& GetBasicBlocks() const { return mBasicBlocks; }
     inline BasicBlock* GetBasicBlock(const size_t idx) const { return mBasicBlocks[idx]; }
+    inline BasicBlock* GetEntryBasicBlock() const { return mEntry; }
 
     inline size_t Size() const { return mBasicBlocks.size(); }
 
     // Setters
     inline void SetName(const std::string& name) { mName = name; }
+    inline void SetEntryBasicBlock(BasicBlock* basicBlock) { mEntry = basicBlock; }
 
     inline void AppendBasicBlock(BasicBlock* basicBlock) { mBasicBlocks.push_back(basicBlock); }
 
@@ -60,9 +62,12 @@ public:
             return false;
         }
         for (const auto* bb : mBasicBlocks) {
-            if (!bb->IsValid()) {
+            if (!bb->IsValid() || bb->GetParentFunction() != this) {
                 return false;
             }
+        }
+        if (mEntry == nullptr || mEntry->GetPredecessors().size() != 0) {
+            return false;
         }
         return true;
     }
@@ -72,6 +77,7 @@ private:
     ValueType mRetType{ValueType::Unknown};
     std::vector<Value*> mArgs{};
     std::vector<BasicBlock*> mBasicBlocks{};
+    BasicBlock* mEntry{};
 };
 
 }   // namespace VMIR

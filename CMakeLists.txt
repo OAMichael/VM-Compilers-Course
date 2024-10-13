@@ -18,5 +18,7 @@ set(COMPILE_OPTIONS
 
 add_compile_options(${COMPILE_OPTIONS})
 
+add_subdirectory(googletest)
 add_subdirectory(Src)
 add_subdirectory(SampleIR)
+add_subdirectory(Test)

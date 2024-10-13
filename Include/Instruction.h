@@ -96,6 +96,8 @@ public:
     inline Instruction* GetNext() const { return mNext; }
     inline void SetNext(Instruction* next) { mNext = next; }
 
+    bool IsDominatedBy(Instruction* inst);
+
 protected:
     InstructionType mType{};
     InstructionId mId{-1};

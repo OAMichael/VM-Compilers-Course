@@ -14,6 +14,8 @@ int main() {
     VMIR::BasicBlock* LoopBodyBB        = IrBuilder->CreateBasicBlock(Fact, "LoopBody");
     VMIR::BasicBlock* LoopExitBB        = IrBuilder->CreateBasicBlock(Fact, "LoopExit");
 
+    Fact->SetEntryBasicBlock(EntryBB);
+
     VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0UL);
     VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1UL);
     VMIR::Value* two  = IrBuilder->CreateValue(Fact, 2UL);
@@ -61,7 +63,9 @@ int main() {
 
     // Create Control Flow Graph
     VMIR::ControlFlowGraph* cfg = IrBuilder->CreateControlFlowGraph(Fact);
-    cfg->GenerateDotFile("FactLoop");
+    cfg->GenerateDotFileCFG("FactLoopCFG");
+    cfg->BuildDominatorTree();
+    cfg->GenerateDotFileDomTree("FactLoopDomTree");
 
     return 0;
 }

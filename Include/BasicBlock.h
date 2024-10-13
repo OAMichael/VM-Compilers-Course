@@ -40,6 +40,24 @@ public:
         return ret;
     }
 
+    std::optional<size_t> IndexOfInstruction(Instruction* inst) const {
+        if (inst == nullptr || inst->GetParentBasicBlock() != this || mSize == 0) {
+            return std::nullopt;
+        }
+
+        size_t idx = 0;
+        Instruction* bbInst = mFirstInst;
+        while (bbInst != nullptr && bbInst != inst) {
+            bbInst = bbInst->GetNext();
+            ++idx;
+        }
+
+        if (idx >= mSize) {
+            return std::nullopt;
+        }
+        return idx;
+    }
+
     void PrependInstruction(Instruction* inst) {
         if (mFirstInst == nullptr) {
             mFirstInst = mLastInst = inst;
@@ -150,6 +168,22 @@ public:
     inline void SetTrueSuccessor(BasicBlock* succ)  { mTrueSuccessor = succ; }
     inline void SetFalseSuccessor(BasicBlock* succ) { mFalseSuccessor = succ; }
 
+    inline bool IsMarked() const { return mMarked; }
+    inline BasicBlock* GetImmediateDominator() const { return mImmediateDominator; }
+
+    inline bool IsDominatedBy(BasicBlock* dom) {
+        if (mImmediateDominator == nullptr) {
+            return false;
+        }
+        if (mImmediateDominator == dom) {
+            return true;
+        }
+        return mImmediateDominator->IsDominatedBy(dom);
+    }
+
+    inline void SetMarked(bool marked = true) { mMarked = marked; }
+    inline void SetImmediateDominator(BasicBlock* dom) { mImmediateDominator = dom; }
+
     inline void Print(std::ostream& out) const {
         out << GetName() << ":";
         if (mPredecessors.size() > 0) {
@@ -204,6 +238,10 @@ private:
     // True successor is also unconditional successor for Jump instruction
     BasicBlock* mTrueSuccessor{nullptr};
     BasicBlock* mFalseSuccessor{nullptr};
+
+    // Information related to dominator tree
+    bool mMarked{false};
+    BasicBlock* mImmediateDominator{nullptr};
 };
 
 }   // namespace VMIR

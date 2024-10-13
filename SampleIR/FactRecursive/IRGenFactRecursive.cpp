@@ -13,6 +13,8 @@ int main() {
     VMIR::BasicBlock* BB_3 = IrBuilder->CreateBasicBlock(Fact, "BB_3");
     VMIR::BasicBlock* BB_4 = IrBuilder->CreateBasicBlock(Fact, "BB_4");
 
+    Fact->SetEntryBasicBlock(BB_1);
+
     VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0);
     VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1);
 
@@ -48,7 +50,9 @@ int main() {
 
     // Create Control Flow Graph
     VMIR::ControlFlowGraph* cfg = IrBuilder->CreateControlFlowGraph(Fact);
-    cfg->GenerateDotFile("FactRecursive");
+    cfg->GenerateDotFileCFG("FactRecursiveCFG");
+    cfg->BuildDominatorTree();
+    cfg->GenerateDotFileDomTree("FactRecursiveDomTree");
 
     return 0;
 }
