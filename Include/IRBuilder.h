@@ -232,7 +232,7 @@ public:
         }
     }
 
-    void PrintDebug(std::ostream& out) const;
+    void PrintDebug(std::ostream& out);
 
 private:
     std::vector<BasicBlock*> mBasicBlocks{};

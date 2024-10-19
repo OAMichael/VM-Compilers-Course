@@ -170,15 +170,20 @@ public:
 
     inline bool IsMarked() const { return mMarked; }
     inline BasicBlock* GetImmediateDominator() const { return mImmediateDominator; }
+    inline std::set<BasicBlock*>& GetDominatedBasicBlocks() { return mDominatedBlocks; }
 
-    inline bool IsDominatedBy(BasicBlock* dom) {
-        if (mImmediateDominator == nullptr) {
+    inline bool IsDominatedBy(BasicBlock* other) {
+        if (other == nullptr) {
             return false;
         }
-        if (mImmediateDominator == dom) {
-            return true;
+        return other->GetDominatedBasicBlocks().contains(this);
+    }
+
+    inline bool IsDominatorOf(BasicBlock* other) {
+        if (other == nullptr) {
+            return false;
         }
-        return mImmediateDominator->IsDominatedBy(dom);
+        return mDominatedBlocks.contains(other);
     }
 
     inline void SetMarked(bool marked = true) { mMarked = marked; }
@@ -242,6 +247,7 @@ private:
     // Information related to dominator tree
     bool mMarked{false};
     BasicBlock* mImmediateDominator{nullptr};
+    std::set<BasicBlock*> mDominatedBlocks{};
 };
 
 }   // namespace VMIR

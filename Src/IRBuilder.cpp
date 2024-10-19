@@ -830,23 +830,23 @@ IRBuilder::~IRBuilder() {
 }
 
 
-void IRBuilder::PrintDebug(std::ostream& out) const {
+void IRBuilder::PrintDebug(std::ostream& out) {
     for (auto* f : mFunctions) {
-        out << "Function: " << f->GetName() << std::endl;
+        out << "Function: " << f->GetName() << "\n";
 
-        out << "    Predecessors:" << std::endl;
+        out << "    Predecessors:\n";
         for (const auto* bb : mBasicBlocks) {
             if (bb->GetParentFunction() != f) {
                 continue;
             }
 
             for (const auto* pred : bb->GetPredecessors()) {
-                out << "        " << pred->GetName() << " -> " << bb->GetName() << std::endl;
+                out << "        " << pred->GetName() << " -> " << bb->GetName() << "\n";
             }
         }
         out << "\n";
 
-        out << "    Successors:" << std::endl;
+        out << "    Successors:\n";
         for (const auto* bb : mBasicBlocks) {
             if (bb->GetParentFunction() != f) {
                 continue;
@@ -854,46 +854,83 @@ void IRBuilder::PrintDebug(std::ostream& out) const {
 
             auto [trueSucc, falseSucc] = bb->GetSuccessors();
             if (trueSucc) {
-                out << "        " << bb->GetName() << " -> " << trueSucc->GetName() << std::endl;
+                out << "        " << bb->GetName() << " -> " << trueSucc->GetName() << "\n";
             }
             if (falseSucc) {
-                out << "        " << bb->GetName() << " -> " << falseSucc->GetName() << std::endl;
+                out << "        " << bb->GetName() << " -> " << falseSucc->GetName() << "\n";
             }
         }
         out << "\n";
 
-        out << "    Users:" << std::endl;
+        out << "    Users:\n";
         for (const auto* v : mValuesWithData.at(f)) {
             for (const auto* i : v->GetUsers()) {
-                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]" << std::endl;
+                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
             }
         }
         for (const auto* v : mValues.at(f)) {
             for (const auto* i : v->GetUsers()) {
-                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]" << std::endl;
+                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
             }
         }
         out << "\n";
 
-        out << "    Producers:" << std::endl;
+        out << "    Producers:\n";
         for (const auto* v : mValuesWithData.at(f)) {
             Instruction* prod = v->GetProducer();
             if (prod != nullptr) {
-                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]" << std::endl;
+                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
             }
             else {
-                out << "        " << v->GetValueStr() << " -> null" << std::endl;
+                out << "        " << v->GetValueStr() << " -> null\n";
             }
         }
         for (const auto* v : mValues.at(f)) {
             Instruction* prod = v->GetProducer();
             if (prod != nullptr) {
-                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]" << std::endl;
+                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
             }
             else {
-                out << "        " << v->GetValueStr() << " -> null" << std::endl;
+                out << "        " << v->GetValueStr() << " -> null\n";
             }
         }
+        out << "\n";
+
+        ControlFlowGraph* graph = nullptr;
+        if (auto it = mGraphs.find(f); it != mGraphs.end()) {
+            graph = it->second;
+        }
+        else {
+            graph = CreateControlFlowGraph(f);
+        }
+
+        if (!graph->IsDominatorTreeBuilt()) {
+            graph->BuildDominatorTree();
+        }
+
+        out << "    Dominance relationship:\n";
+        for (auto* bb : graph->GetBasicBlocks()) {
+            if (bb->GetImmediateDominator() != nullptr) {
+                out << "        idom(" << bb->GetName() << ") = " << bb->GetImmediateDominator()->GetName() << "\n";
+            }
+            else {
+                out << "        idom(" << bb->GetName() << ") = null\n";
+            }
+        }
+        out << "\n";
+
+        for (auto* bb : graph->GetBasicBlocks()) {
+            auto& allDominated = bb->GetDominatedBasicBlocks();
+            out << "        " << bb->GetName() << " >> [";
+            for (auto it = allDominated.begin(), end = allDominated.end(); it != end; ++it) {
+                if (it != allDominated.begin()) {
+                    out << ", ";
+                }
+                out << (*it)->GetName();
+            }
+            out << "]\n";
+        }
+        out << "\n";
     }
 }
 

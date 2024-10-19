@@ -1,5 +1,6 @@
 #include <fstream>
 #include <unordered_map>
+#include <algorithm>
 
 #include <ControlFlowGraph.h>
 
@@ -134,16 +135,15 @@ bool ControlFlowGraph::GenerateDotFileDomTree(const std::string& filename) {
 }
 
 void ControlFlowGraph::BuildDominatorTree() {
-    // Key:     basic block
-    // Value:   list of all blocks dominated by key block (i.e. key = dom(value))
-    std::unordered_map<BasicBlock*, std::vector<BasicBlock*>> dominatedBlocks;
-
     // Run DFS to check all reachable blocks from entry basic block
     DFS dfs{};
     dfs.Run(mEntry);
     dfs.UnmarkAll();
-    dominatedBlocks.insert({mEntry, std::move(dfs.GetBasicBlocks())});
-    std::vector<BasicBlock*>& allReachableBlocks = dominatedBlocks[mEntry];
+    auto& allReachableBlocks = mEntry->GetDominatedBasicBlocks();
+    auto& dfsVec = dfs.GetBasicBlocks();
+
+    allReachableBlocks = std::move(std::set<BasicBlock*>(dfsVec.begin(), dfsVec.end()));
+    dfsVec.clear();
 
     // Now, for every vertex != entry:
     // - Remove this vertex from the graph (dfs.Run(mEntry, bb) means do DFS but ignore bb)
@@ -157,55 +157,40 @@ void ControlFlowGraph::BuildDominatorTree() {
         dfs.Run(mEntry, bb);
         dfs.UnmarkAll();
 
-        std::vector<BasicBlock*> reachable = std::move(dfs.GetBasicBlocks());
-        std::vector<BasicBlock*> dominated{};
-        for (auto* rb : allReachableBlocks) {
-            auto it = std::find(reachable.begin(), reachable.end(), rb);
-            if (it == reachable.end()) {
-                dominated.push_back(rb);
-            }
-        }
-        dominatedBlocks.insert({bb, std::move(dominated)});
+        auto& allDominated = bb->GetDominatedBasicBlocks();
+
+        std::set<BasicBlock*> reachable(dfsVec.begin(), dfsVec.end());
+        std::set_difference(allReachableBlocks.begin(),
+                            allReachableBlocks.end(),
+                            reachable.begin(),
+                            reachable.end(),
+                            std::inserter(allDominated, allDominated.end()));
+        dfsVec.clear();
     }
 
-    // By this moment we have list of dominated vertices for every vertex in the graph
+    // By this moment we have a set of dominated vertices for every vertex in the graph
     // But we need immediately dominated vertices to build a dominator tree
     // So, remove dominated vertices which are dominated by another dominated vertex
-    for (auto& bbDoms : dominatedBlocks) {
-        auto* bb = bbDoms.first;
-        const auto& allDominated = bbDoms.second;
-        std::vector<BasicBlock*> immDominated = allDominated;
-
-        for (size_t i = 0; i < immDominated.size(); ++i) {
-            if (immDominated[i] == nullptr) {
+    for (auto* bb : mGraph) {
+        const auto& allDominated = bb->GetDominatedBasicBlocks();
+        std::set<BasicBlock*> immDominated = allDominated;
+        immDominated.erase(bb);
+        for (auto* dominatedBB : allDominated) {
+            if (dominatedBB == bb) {
                 continue;
             }
 
-            if (immDominated[i] == bb) {
-                immDominated[i] = nullptr;
-                continue;
-            }
-
-            auto* dominatedBB = immDominated[i];
-            const auto& dominatedBBAllDominated = dominatedBlocks[dominatedBB];
-            for (size_t j = 0; j < dominatedBBAllDominated.size(); ++j) {
-                auto* dominatedBBDominatedBB = dominatedBBAllDominated[j];
-                if (immDominated[i] == dominatedBBDominatedBB) {
+            const auto& dominatedBBAllDominated = dominatedBB->GetDominatedBasicBlocks();
+            for (auto* dominatedBBDominatedBB : dominatedBBAllDominated) {
+                if (dominatedBBDominatedBB == dominatedBB) {
                     continue;
                 }
-
-                auto domIt = std::find(immDominated.begin(), immDominated.end(), dominatedBBDominatedBB);
-                if (domIt != immDominated.end()) {
-                    *domIt = nullptr;
-                }
+                immDominated.erase(dominatedBBDominatedBB);
             }
         }
 
-        std::erase_if(immDominated, [](BasicBlock* bb) { return bb == nullptr; });
-        for (auto* immDominatedBB : immDominated) {
-            if (immDominatedBB != nullptr) {
-                immDominatedBB->SetImmediateDominator(bb);
-            }
+        for (auto* dominatedBB : immDominated) {
+            dominatedBB->SetImmediateDominator(bb);
         }
     }
 
