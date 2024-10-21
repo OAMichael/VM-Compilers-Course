@@ -7,6 +7,7 @@
 #include <BasicBlock.h>
 #include <Function.h>
 #include <ControlFlowGraph.h>
+#include <LoopAnalyzer.h>
 
 namespace VMIR {
 
@@ -206,6 +207,12 @@ public:
         return cfg;
     }
 
+    inline LoopAnalyzer* CreateLoopAnalyzer(ControlFlowGraph* graph) {
+        LoopAnalyzer* loopAnalyzer = new LoopAnalyzer(graph);
+        mLoopAnalyzers.insert({graph, loopAnalyzer});
+        return loopAnalyzer;
+    }
+
 
     inline void Cleanup() {
         for (const auto& v : mValues) {
@@ -230,6 +237,17 @@ public:
         for (const auto& cfg : mGraphs) {
             delete cfg.second;
         }
+        for (const auto& la : mLoopAnalyzers) {
+            delete la.second;
+        }
+
+        mBasicBlocks.clear();
+        mFunctions.clear();
+        mInstructions.clear();
+        mValues.clear();
+        mValuesWithData.clear();
+        mGraphs.clear();
+        mLoopAnalyzers.clear();
     }
 
     void PrintDebug(std::ostream& out);
@@ -244,6 +262,7 @@ private:
     std::unordered_map<Function*, std::vector<Value*>> mValues{};
     std::unordered_map<Function*, std::vector<Value*>> mValuesWithData{};
     std::unordered_map<Function*, ControlFlowGraph*> mGraphs{};
+    std::unordered_map<ControlFlowGraph*, LoopAnalyzer*> mLoopAnalyzers{};
 };
 
 }

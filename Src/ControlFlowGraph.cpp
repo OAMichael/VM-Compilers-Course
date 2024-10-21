@@ -12,7 +12,7 @@ void DFS::Run(BasicBlock* entryBB, BasicBlock* ignoredBB) {
 
 void DFS::UnmarkAll() {
     for (auto* bb : mDFSVector) {
-        bb->SetMarked(false);
+        bb->SetUnmarked();
     }
 }
 
@@ -24,14 +24,19 @@ void DFS::DFSInternal(BasicBlock* block, BasicBlock* ignoredBB) {
     block->SetMarked();
     mDFSVector.push_back(block);
 
-    auto* trueSucc = block->GetTrueSuccessor();
-    if (trueSucc && !trueSucc->IsMarked()) {
-        DFSInternal(trueSucc, ignoredBB);
+    if (mReverse) {
+        for (auto* pred : block->GetPredecessors()) {
+            if (!pred->IsMarked()) {
+                DFSInternal(pred, ignoredBB);
+            }
+        }
     }
-
-    auto* falseSucc = block->GetFalseSuccessor();
-    if (falseSucc && !falseSucc->IsMarked()) {
-        DFSInternal(falseSucc, ignoredBB);
+    else {
+        for (auto* succ : block->GetSuccessors()) {
+            if (!succ->IsMarked()) {
+                DFSInternal(succ, ignoredBB);
+            }
+        }
     }
 }
 
@@ -43,7 +48,7 @@ void RPO::Run(BasicBlock* entryBB, size_t* pCount, BasicBlock* ignoredBB) {
 
 void RPO::UnmarkAll() {
     for (auto* bb : mRPOVector) {
-        bb->SetMarked(false);
+        bb->SetUnmarked();
     }
 }
 
@@ -54,14 +59,10 @@ void RPO::RPOInternal(BasicBlock* block, size_t* pCount, BasicBlock* ignoredBB) 
 
     block->SetMarked();
 
-    auto* trueSucc = block->GetTrueSuccessor();
-    if (trueSucc && !trueSucc->IsMarked()) {
-        RPOInternal(trueSucc, pCount, ignoredBB);
-    }
-
-    auto* falseSucc = block->GetFalseSuccessor();
-    if (falseSucc && !falseSucc->IsMarked()) {
-        RPOInternal(falseSucc, pCount, ignoredBB);
+    for (auto* succ : block->GetSuccessors()) {
+        if (!succ->IsMarked()) {
+            RPOInternal(succ, pCount, ignoredBB);
+        }
     }
 
     mRPOVector[--(*pCount)] = block;

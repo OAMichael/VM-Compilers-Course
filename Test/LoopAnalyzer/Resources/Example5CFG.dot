@@ -1,0 +1,19 @@
+digraph G {
+    graph[color="#242038"]
+    node[color="#242038", shape=square]
+    edge[color="#242038"]
+    A->B
+    H->B
+    B->C
+    D->C
+    J->C
+    C->D
+    D->E
+    F->E
+    E->F
+    F->G
+    G->H
+    G->I
+    B->J
+    I->K
+}

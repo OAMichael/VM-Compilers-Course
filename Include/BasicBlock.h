@@ -9,9 +9,21 @@
 namespace VMIR {
 
 class Function;
+class Loop;
 
 class BasicBlock {
 public:
+    enum Marker : uint32_t {
+        None  = 0,
+        Black = 1 << 0,
+        Grey  = 1 << 1,
+        Green = 1 << 2,
+
+        All = Black | Grey | Green
+    };
+
+    using MarkerFlags = uint32_t;
+
     BasicBlock(const Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
     : mParentFunction{parentFunction}, mId{id}, mName{name} {};
 
@@ -162,13 +174,21 @@ public:
     inline BasicBlock* GetSuccessor()      { return mTrueSuccessor; }
     inline BasicBlock* GetTrueSuccessor()  { return mTrueSuccessor; }
     inline BasicBlock* GetFalseSuccessor() { return mFalseSuccessor; }
-    inline std::pair<BasicBlock*, BasicBlock*> GetSuccessors() const { return std::make_pair(mTrueSuccessor, mFalseSuccessor); }
+    inline std::vector<BasicBlock*> GetSuccessors() const {
+        std::vector<BasicBlock*> succs;
+        if (mTrueSuccessor) {
+            succs.push_back(mTrueSuccessor);
+        }
+        if (mFalseSuccessor) {
+            succs.push_back(mFalseSuccessor);
+        }
+        return succs;
+    }
 
     inline void SetSuccessor(BasicBlock* succ)      { mTrueSuccessor = succ; }
     inline void SetTrueSuccessor(BasicBlock* succ)  { mTrueSuccessor = succ; }
     inline void SetFalseSuccessor(BasicBlock* succ) { mFalseSuccessor = succ; }
 
-    inline bool IsMarked() const { return mMarked; }
     inline BasicBlock* GetImmediateDominator() const { return mImmediateDominator; }
     inline std::set<BasicBlock*>& GetDominatedBasicBlocks() { return mDominatedBlocks; }
 
@@ -186,8 +206,14 @@ public:
         return mDominatedBlocks.contains(other);
     }
 
-    inline void SetMarked(bool marked = true) { mMarked = marked; }
     inline void SetImmediateDominator(BasicBlock* dom) { mImmediateDominator = dom; }
+
+    inline bool IsMarked(const MarkerFlags marker = Marker::All) const { return mMarkedFlags & marker; }
+    inline void SetMarked(const MarkerFlags marker = Marker::All)   { mMarkedFlags |= marker; }
+    inline void SetUnmarked(const MarkerFlags marker = Marker::All) { mMarkedFlags &= ~marker; }
+
+    inline Loop* GetLoop() const { return mLoop; }
+    inline void SetLoop(Loop* loop) { mLoop = loop; }
 
     inline void Print(std::ostream& out) const {
         out << GetName() << ":";
@@ -245,9 +271,12 @@ private:
     BasicBlock* mFalseSuccessor{nullptr};
 
     // Information related to dominator tree
-    bool mMarked{false};
     BasicBlock* mImmediateDominator{nullptr};
     std::set<BasicBlock*> mDominatedBlocks{};
+
+    MarkerFlags mMarkedFlags{Marker::None};
+
+    Loop* mLoop{nullptr};
 };
 
 }   // namespace VMIR

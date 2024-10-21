@@ -63,9 +63,14 @@ int main() {
 
     // Create Control Flow Graph
     VMIR::ControlFlowGraph* cfg = IrBuilder->CreateControlFlowGraph(Fact);
-    cfg->GenerateDotFileCFG("FactLoopCFG");
+    VMIR::LoopAnalyzer* loopAnalyzer = IrBuilder->CreateLoopAnalyzer(cfg);
+
     cfg->BuildDominatorTree();
+    loopAnalyzer->BuildLoopTree();
+
+    cfg->GenerateDotFileCFG("FactLoopCFG");
     cfg->GenerateDotFileDomTree("FactLoopDomTree");
+    loopAnalyzer->GenerateDotFileLoopTree("FactLoopLoopTree");
 
     return 0;
 }

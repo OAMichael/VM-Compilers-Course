@@ -1,3 +1,3 @@
-|   <div style="width:590px"></div> ![](FactRecursiveCFG.png)   | <div style="width:290px"></div> ![](FactRecursiveDomTree.png)   |
-|:-:                                                            |:-:                                                              |
-|                   Control Flow Graph                          |                         Dominator Tree                          |
+|   <div style="width:290px"></div> ![](Resources/FactRecursiveCFG.png)     | <div style="width:290px"></div> ![](Resources/FactRecursiveDomTree.png)   | <div style="width:290px"></div> ![](Resources/FactRecursiveLoopTree.png)  |
+|:-:                                                                        |:-:                                                                        |:-:                                                                        |
+|                       Control Flow Graph                                  |                               Dominator Tree                              |                                   Loop Tree                               |

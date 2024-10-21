@@ -852,12 +852,8 @@ void IRBuilder::PrintDebug(std::ostream& out) {
                 continue;
             }
 
-            auto [trueSucc, falseSucc] = bb->GetSuccessors();
-            if (trueSucc) {
-                out << "        " << bb->GetName() << " -> " << trueSucc->GetName() << "\n";
-            }
-            if (falseSucc) {
-                out << "        " << bb->GetName() << " -> " << falseSucc->GetName() << "\n";
+            for (auto* succ : bb->GetSuccessors()) {
+                out << "        " << bb->GetName() << " -> " << succ->GetName() << "\n";
             }
         }
         out << "\n";

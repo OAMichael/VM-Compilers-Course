@@ -50,9 +50,14 @@ int main() {
 
     // Create Control Flow Graph
     VMIR::ControlFlowGraph* cfg = IrBuilder->CreateControlFlowGraph(Fact);
-    cfg->GenerateDotFileCFG("FactRecursiveCFG");
+    VMIR::LoopAnalyzer* loopAnalyzer = IrBuilder->CreateLoopAnalyzer(cfg);
+
     cfg->BuildDominatorTree();
+    loopAnalyzer->BuildLoopTree();
+
+    cfg->GenerateDotFileCFG("FactRecursiveCFG");
     cfg->GenerateDotFileDomTree("FactRecursiveDomTree");
+    loopAnalyzer->GenerateDotFileLoopTree("FactRecursiveLoopTree");
 
     return 0;
 }

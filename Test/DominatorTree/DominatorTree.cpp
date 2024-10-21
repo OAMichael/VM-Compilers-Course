@@ -65,6 +65,8 @@ TEST(dominator_tree, example1) {
     EXPECT_TRUE(G->IsDominatedBy(F));
     EXPECT_TRUE(G->IsDominatedBy(B));
     EXPECT_TRUE(G->IsDominatedBy(A));
+
+    IrBuilder->Cleanup();
 }
 
 
@@ -181,6 +183,8 @@ TEST(dominator_tree, example2) {
     EXPECT_TRUE(K->IsDominatedBy(C));
     EXPECT_TRUE(K->IsDominatedBy(B));
     EXPECT_TRUE(K->IsDominatedBy(A));
+
+    IrBuilder->Cleanup();
 }
 
 
@@ -260,6 +264,8 @@ TEST(dominator_tree, example3) {
     EXPECT_TRUE(H->IsDominatedBy(A));
     EXPECT_TRUE(I->IsDominatedBy(B));
     EXPECT_TRUE(I->IsDominatedBy(A));
+
+    IrBuilder->Cleanup();
 }
 
 

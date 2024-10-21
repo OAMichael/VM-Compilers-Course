@@ -7,6 +7,7 @@ set(VMIR_UTILS_SOURCES
     Function.cpp
     IRBuilder.cpp
     ControlFlowGraph.cpp
+    LoopAnalyzer.cpp
 )
 
 add_library(${VMIR_UTILS_NAME} STATIC ${VMIR_UTILS_SOURCES})
