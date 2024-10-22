@@ -12,7 +12,7 @@ void DFS::Run(BasicBlock* entryBB, BasicBlock* ignoredBB) {
 
 void DFS::UnmarkAll() {
     for (auto* bb : mDFSVector) {
-        bb->SetUnmarked();
+        bb->SetUnmarked(mMarker);
     }
 }
 
@@ -21,19 +21,19 @@ void DFS::DFSInternal(BasicBlock* block, BasicBlock* ignoredBB) {
         return;
     }
 
-    block->SetMarked();
+    block->SetMarked(mMarker);
     mDFSVector.push_back(block);
 
     if (mReverse) {
         for (auto* pred : block->GetPredecessors()) {
-            if (!pred->IsMarked()) {
+            if (!pred->IsMarked(mMarker)) {
                 DFSInternal(pred, ignoredBB);
             }
         }
     }
     else {
         for (auto* succ : block->GetSuccessors()) {
-            if (!succ->IsMarked()) {
+            if (!succ->IsMarked(mMarker)) {
                 DFSInternal(succ, ignoredBB);
             }
         }
@@ -48,7 +48,7 @@ void RPO::Run(BasicBlock* entryBB, size_t* pCount, BasicBlock* ignoredBB) {
 
 void RPO::UnmarkAll() {
     for (auto* bb : mRPOVector) {
-        bb->SetUnmarked();
+        bb->SetUnmarked(mMarker);
     }
 }
 
@@ -57,10 +57,10 @@ void RPO::RPOInternal(BasicBlock* block, size_t* pCount, BasicBlock* ignoredBB) 
         return;
     }
 
-    block->SetMarked();
+    block->SetMarked(mMarker);
 
     for (auto* succ : block->GetSuccessors()) {
-        if (!succ->IsMarked()) {
+        if (!succ->IsMarked(mMarker)) {
             RPOInternal(succ, pCount, ignoredBB);
         }
     }
