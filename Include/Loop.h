@@ -31,11 +31,22 @@ public:
     inline void InsertInnerLoop(Loop* inner) { mInnerLoops.insert(inner); }
     inline void RemoveInnerLoop(Loop* inner) { mInnerLoops.erase(inner);  }
 
+    // Check if other loop is inside of this (possible other loop is inner for one of inner loops of this and etc)
+    inline bool IsLoopInside(Loop* other) const {
+        if (other == this) {
+            return true;
+        }
+        if (other == nullptr) {
+            return false;
+        }
+        return mInnerLoops.find(other) != mInnerLoops.cend();
+    }
+
 private:
     BasicBlock* mHeader{nullptr};               // Header of the loop
     std::vector<BasicBlock*> mBasicBlocks{};    // All basic blocks of the loop (including the header and all latches, but excluding inner loops' blocks)
     std::vector<BasicBlock*> mLatches{};        // Only latches of the loop
-    bool mIsReducible{false};
+    bool mIsReducible{true};
 
     Loop* mOuterLoop{nullptr};
     std::set<Loop*> mInnerLoops{};

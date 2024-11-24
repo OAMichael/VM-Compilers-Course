@@ -740,22 +740,22 @@ InstructionRet* IRBuilder::CreateRet() {
     return CreateRet(nullptr, nullptr);
 }
 
-InstructionRet* IRBuilder::CreateRet(Value* output) {
-    return CreateRet(nullptr, output);
+InstructionRet* IRBuilder::CreateRet(Value* returnValue) {
+    return CreateRet(nullptr, returnValue);
 }
 
 InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock) {
     return CreateRet(parentBasicBlock, nullptr);
 }
 
-InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, Value* output) {
+InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, Value* returnValue) {
     InstructionId id = mInstructions.size();
-    InstructionRet* inst = new InstructionRet(id, output);
+    InstructionRet* inst = new InstructionRet(id, returnValue);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
     }
-    if (output != nullptr) {
-        output->AddUser(inst);
+    if (returnValue != nullptr) {
+        returnValue->AddUser(inst);
     }
     mInstructions.insert({id, inst});
     return inst;

@@ -11,6 +11,7 @@ namespace VMIR {
 class Function;
 class Loop;
 
+
 class BasicBlock {
 public:
     enum Marker : uint32_t {
@@ -215,6 +216,16 @@ public:
     inline Loop* GetLoop() const { return mLoop; }
     inline void SetLoop(Loop* loop) { mLoop = loop; }
 
+    inline LiveRange& GetLiveRange() { return mLiveRange; }
+    inline const LiveRange& GetLiveRange() const { return mLiveRange; }
+
+    inline bool IsProducerOf(Value* value) const {
+        if (value == nullptr || value->GetProducer() == nullptr || value->GetProducer()->GetParentBasicBlock() != this) {
+            return false;
+        }
+        return true;
+    }
+
     inline void Print(std::ostream& out) const {
         out << GetName() << ":";
         if (mPredecessors.size() > 0) {
@@ -245,9 +256,16 @@ public:
         }
 
         Instruction* inst = mFirstInst;
+        bool seenNotPhi = false;
         while (inst != nullptr) {
             if (!inst->IsValid()) {
                 return false;
+            }
+            if (seenNotPhi && inst->IsPhi()) {
+                return false;
+            }
+            if (!inst->IsPhi()) {
+                seenNotPhi = true;
             }
             inst = inst->GetNext();
         }
@@ -277,6 +295,8 @@ private:
     MarkerFlags mMarkedFlags{Marker::None};
 
     Loop* mLoop{nullptr};
+
+    LiveRange mLiveRange{};
 };
 
 }   // namespace VMIR

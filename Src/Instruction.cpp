@@ -162,9 +162,9 @@ bool InstructionCall::IsValid() const {
 
 std::string InstructionRet::GetAsString() const {
     std::string outStr = "Ret";
-    if (mOutput != nullptr) {
-        const std::string retTypeStr = ValueTypeToIdStr(mOutput->GetValueType());
-        const std::string retName = mOutput->GetValueStr();
+    if (mReturnValue != nullptr) {
+        const std::string retTypeStr = ValueTypeToIdStr(mReturnValue->GetValueType());
+        const std::string retName = mReturnValue->GetValueStr();
         outStr += " " + retTypeStr + " " + retName;
     }
     return outStr;
@@ -183,11 +183,11 @@ bool InstructionRet::IsValid() const {
         return false;
     }
 
-    if ((mParentBasicBlock->GetParentFunction()->GetReturnType() != ValueType::Void) != (mOutput != nullptr)) {
+    if ((mParentBasicBlock->GetParentFunction()->GetReturnType() != ValueType::Void) != (mReturnValue != nullptr)) {
         return false;
     }
 
-    if ((mOutput != nullptr) && (!mOutput->IsValid() || mOutput->GetValueType() != mParentBasicBlock->GetParentFunction()->GetReturnType())) {
+    if ((mReturnValue != nullptr) && (!mReturnValue->IsValid() || mReturnValue->GetValueType() != mParentBasicBlock->GetParentFunction()->GetReturnType())) {
         return false;
     }
 

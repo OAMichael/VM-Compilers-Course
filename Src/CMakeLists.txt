@@ -8,6 +8,7 @@ set(VMIR_UTILS_SOURCES
     IRBuilder.cpp
     ControlFlowGraph.cpp
     LoopAnalyzer.cpp
+    LivenessAnalyzer.cpp
 )
 
 add_library(${VMIR_UTILS_NAME} STATIC ${VMIR_UTILS_SOURCES})

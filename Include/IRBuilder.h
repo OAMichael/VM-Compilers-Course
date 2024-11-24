@@ -8,6 +8,7 @@
 #include <Function.h>
 #include <ControlFlowGraph.h>
 #include <LoopAnalyzer.h>
+#include <LivenessAnalyzer.h>
 
 namespace VMIR {
 
@@ -184,9 +185,9 @@ public:
     InstructionCall* CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret, const std::vector<Value*>& args);
 
     InstructionRet* CreateRet();
-    InstructionRet* CreateRet(Value* output);
+    InstructionRet* CreateRet(Value* returnValue);
     InstructionRet* CreateRet(BasicBlock* parentBasicBlock);
-    InstructionRet* CreateRet(BasicBlock* parentBasicBlock, Value* output);
+    InstructionRet* CreateRet(BasicBlock* parentBasicBlock, Value* returnValue);
 
     InstructionAlloc* CreateAlloc();
     InstructionAlloc* CreateAlloc(Value* output);
@@ -213,6 +214,33 @@ public:
         return loopAnalyzer;
     }
 
+    inline LivenessAnalyzer* CreateLivenessAnalyzer(ControlFlowGraph* graph) {
+        LivenessAnalyzer* livenessAnalyzer = new LivenessAnalyzer(graph);
+        mLivenessAnalyzers.insert({graph, livenessAnalyzer});
+        return livenessAnalyzer;
+    }
+
+
+    inline ControlFlowGraph* GetOrCreateControlFlowGraph(Function* function) {
+        if (auto it = mGraphs.find(function); it != mGraphs.end()) {
+            return it->second;
+        }
+        return CreateControlFlowGraph(function);
+    }
+
+    inline LoopAnalyzer* GetOrCreateLoopAnalyzer(ControlFlowGraph* graph) {
+        if (auto it = mLoopAnalyzers.find(graph); it != mLoopAnalyzers.end()) {
+            return it->second;
+        }
+        return CreateLoopAnalyzer(graph);
+    }
+
+    inline LivenessAnalyzer* GetOrCreateLivenessAnalyzer(ControlFlowGraph* graph) {
+        if (auto it = mLivenessAnalyzers.find(graph); it != mLivenessAnalyzers.end()) {
+            return it->second;
+        }
+        return CreateLivenessAnalyzer(graph);
+    }
 
     inline void Cleanup() {
         for (const auto& v : mValues) {
@@ -240,6 +268,9 @@ public:
         for (const auto& la : mLoopAnalyzers) {
             delete la.second;
         }
+        for (const auto& la : mLivenessAnalyzers) {
+            delete la.second;
+        }
 
         mBasicBlocks.clear();
         mFunctions.clear();
@@ -248,6 +279,7 @@ public:
         mValuesWithData.clear();
         mGraphs.clear();
         mLoopAnalyzers.clear();
+        mLivenessAnalyzers.clear();
     }
 
     void PrintDebug(std::ostream& out);
@@ -263,6 +295,7 @@ private:
     std::unordered_map<Function*, std::vector<Value*>> mValuesWithData{};
     std::unordered_map<Function*, ControlFlowGraph*> mGraphs{};
     std::unordered_map<ControlFlowGraph*, LoopAnalyzer*> mLoopAnalyzers{};
+    std::unordered_map<ControlFlowGraph*, LivenessAnalyzer*> mLivenessAnalyzers{};
 };
 
 }

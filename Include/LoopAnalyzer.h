@@ -31,6 +31,15 @@ public:
     void BuildLoopTree();
     inline bool IsLoopTreeBuilt() const { return mIsLoopTreeBuilt; }
 
+    inline bool HasIrreducibleLoops() const {
+        for (const auto& ll : mLoops) {
+            if (!ll.second->IsReducible()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     inline void Cleanup() {
         for (const auto& l : mLoops) {
             delete l.second;

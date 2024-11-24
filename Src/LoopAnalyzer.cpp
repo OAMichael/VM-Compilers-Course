@@ -30,18 +30,14 @@ bool LoopAnalyzer::GenerateDotFileLoopTree(const std::string& filename) {
         out << "] <br/> Reducible: " << std::boolalpha << loop->IsReducible() << ">]\n";
     }
 
-
-    std::function<void(Loop*)> PrintLoopNode = 
-        [&out, &PrintLoopNode](Loop* loop) -> void {
-            for (auto* inner : loop->GetInnerLoops()) {
-                out << "    " << loop->GetHeader()->GetName() << "->" << inner->GetHeader()->GetName() << "\n";
-                PrintLoopNode(inner);
-            }
-        };
-
-    for (auto* loop : mRootLoop->GetInnerLoops()) {
-        out << "    Root->" << loop->GetHeader()->GetName() << "\n";
-        PrintLoopNode(loop);
+    for (auto& pair : mLoops) {
+        auto* loop = pair.second;
+        if (loop->GetOuterLoop() == mRootLoop) {
+            out << "    Root->" << loop->GetHeader()->GetName() << "\n";
+        }
+        else {
+            out << "    " << loop->GetOuterLoop()->GetHeader()->GetName() << "->" << loop->GetHeader()->GetName() << "\n";
+        }
     }
 
     out << "}\n";
@@ -147,7 +143,7 @@ void LoopAnalyzer::DFSBlackAndGrey(BasicBlock* entryBB) {
 
             loop->SetHeader(succ);
             loop->GetLatches().push_back(entryBB);
-            loop->SetReducible(succ->IsDominatorOf(entryBB));
+            loop->SetReducible(loop->IsReducible() && succ->IsDominatorOf(entryBB));
             continue;
         }
         else if (!succ->IsMarked(BasicBlock::Marker::Black)) {
@@ -178,7 +174,19 @@ void LoopAnalyzer::LoopSearch(BasicBlock* latch, Loop* loop) {
         else if (bbLoop != loop) {
             // If block in other loop (inner): link outer and inner loops
             loop->InsertInnerLoop(bbLoop);
-            bbLoop->SetOuterLoop(loop);
+
+            Loop* outermostLoop = bbLoop->GetOuterLoop();
+            if (outermostLoop != nullptr) {
+                while (outermostLoop->GetOuterLoop() != nullptr) {
+                    outermostLoop = outermostLoop->GetOuterLoop();
+                }
+                if (outermostLoop != loop) {
+                    outermostLoop->SetOuterLoop(loop);
+                }
+            }
+            else {
+                bbLoop->SetOuterLoop(loop);
+            }
         }
     }
     dfs.UnmarkAll();
