@@ -1,0 +1,12 @@
+digraph G {
+    graph[color="#242038"]
+    node[color="#242038", shape=square]
+    edge[color="#242038"]
+    Root [label=<<font point-size="24.0"> Root </font>>]
+    E [label=<<font point-size="24.0"> E </font><br/> [E, O, H, F] <br/> Reducible: true>]
+    A [label=<<font point-size="24.0"> A </font><br/> [A, W, Q, G, D, K, V, T, I, L] <br/> Reducible: true>]
+    B [label=<<font point-size="24.0"> B </font><br/> [B, R, C] <br/> Reducible: true>]
+    A->E
+    Root->A
+    A->B
+}

@@ -1,0 +1,9 @@
+digraph G {
+    graph[color="#242038"]
+    node[color="#242038", shape=square]
+    edge[color="#242038"]
+    0->1
+    2->1
+    1->2
+    1->3
+}

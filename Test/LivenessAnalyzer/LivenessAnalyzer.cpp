@@ -589,7 +589,7 @@ TEST(liveness_analyzer, linear_order__quintuple_nested_loop) {
 }
 
 
-TEST(liveness_analyzer, liveness__fact) {
+TEST(liveness_analyzer, liveness__fact_recursive) {
     /*
         Linear order:
             BB_1:
@@ -698,6 +698,174 @@ TEST(liveness_analyzer, liveness__fact) {
     auto& instV3_LiveInterval = instV3->GetLiveInterval();
     EXPECT_TRUE(instV3_LiveInterval.IsValid());
     EXPECT_EQ(instV3_LiveInterval, VMIR::LiveInterval(14, 16));
+
+
+    IrBuilder->Cleanup();
+}
+
+
+TEST(liveness_analyzer, liveness__fact_loop) {
+    /*
+        Linear order:
+            Entry:
+                live: 0
+                v1 = Add ui64 0, 1                          live: 2,  lin: 0
+                Jump #LoopPreheader                         live: 4,  lin: 1
+                live: 6
+
+            LoopPreheader:
+                live: 6
+                v2 = Add ui64 0, 2                          live: 8,  lin: 2
+                Jump #LoopHeader                            live: 10,  lin: 3
+                live: 12
+
+            LoopHeader:
+                live: 12
+                v3 = Phi ui64 v2, v6                        live: 12,  lin: 4
+                Bgt ui64 v3, v0 ? #LoopExit : #LoopBody     live: 14,  lin: 5
+                live: 16
+
+            LoopBody:
+                live: 16
+                v4 = Phi ui64 v1, v5                        live: 16,  lin: 6
+                v5 = Mul ui64 v4, v3                        live: 18,  lin: 7
+                v6 = Add ui64 v3, 1                         live: 20,  lin: 8
+                Jump #LoopHeader                            live: 22,  lin: 9
+                live: 24
+
+            LoopExit:
+                live: 24
+                v7 = Phi ui64 v1, v5                        live: 24,  lin: 10
+                Ret ui64 v7                                 live: 26,  lin: 11
+                live: 28
+    */
+
+    VMIR::IRBuilder* IrBuilder = VMIR::IRBuilder::GetInstance();
+
+    VMIR::Function* Func = IrBuilder->CreateFunction(VMIR::ValueType::Int32, {VMIR::ValueType::Int32}, "livenessFact");
+
+    VMIR::BasicBlock* EntryBB           = IrBuilder->CreateBasicBlock(Func, "Entry");
+    VMIR::BasicBlock* LoopPreheaderBB   = IrBuilder->CreateBasicBlock(Func, "LoopPreheader");
+    VMIR::BasicBlock* LoopHeaderBB      = IrBuilder->CreateBasicBlock(Func, "LoopHeader");
+    VMIR::BasicBlock* LoopBodyBB        = IrBuilder->CreateBasicBlock(Func, "LoopBody");
+    VMIR::BasicBlock* LoopExitBB        = IrBuilder->CreateBasicBlock(Func, "LoopExit");
+
+    Func->SetEntryBasicBlock(EntryBB);
+
+    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0UL);
+    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1UL);
+    VMIR::Value* two  = IrBuilder->CreateValue(Func, 2UL);
+
+    VMIR::Value* v0 = Func->GetArg(0);
+    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+
+    auto* instV1                    = IrBuilder->CreateAdd(EntryBB, zero, one, v1);
+    auto* instTermEntryBB           = IrBuilder->CreateJump(EntryBB, LoopPreheaderBB);
+
+    auto* instV2                    = IrBuilder->CreateAdd(LoopPreheaderBB, zero, two, v2);
+    auto* instTermLoopPreheaderBB   = IrBuilder->CreateJump(LoopPreheaderBB, LoopHeaderBB);
+
+    auto* instV3                    = IrBuilder->CreatePhi(LoopHeaderBB, {v2, v6}, v3);
+    auto* instTermLoopHeaderBB      = IrBuilder->CreateBgt(LoopHeaderBB, v3, v0, LoopExitBB, LoopBodyBB);
+
+    auto* instV4                    = IrBuilder->CreatePhi(LoopBodyBB, {v1, v5}, v4);
+    auto* instV5                    = IrBuilder->CreateMul(LoopBodyBB, v4, v3, v5);
+    auto* instV6                    = IrBuilder->CreateAdd(LoopBodyBB, v3, one, v6);
+    auto* instTermLoopBodyBB        = IrBuilder->CreateJump(LoopBodyBB, LoopHeaderBB);
+
+    auto* instV7                    = IrBuilder->CreatePhi(LoopExitBB, {v1, v5}, v7);
+    auto* instTermLoopExitBB        = IrBuilder->CreateRet(LoopExitBB, v7);
+
+    VMIR::ControlFlowGraph* cfg = IrBuilder->CreateControlFlowGraph(Func);
+    VMIR::LivenessAnalyzer* livenessAnalyzer = IrBuilder->CreateLivenessAnalyzer(cfg);
+    livenessAnalyzer->PerformLivenessAnalysis();
+
+    TestLinearOrderInvariants(livenessAnalyzer);
+
+
+    EXPECT_EQ(instV1->GetLinearNumber(),                    0);
+    EXPECT_EQ(instTermEntryBB->GetLinearNumber(),           1);
+    EXPECT_EQ(instV2->GetLinearNumber(),                    2);
+    EXPECT_EQ(instTermLoopPreheaderBB->GetLinearNumber(),   3);
+    EXPECT_EQ(instV3->GetLinearNumber(),                    4);
+    EXPECT_EQ(instTermLoopHeaderBB->GetLinearNumber(),      5);
+    EXPECT_EQ(instV4->GetLinearNumber(),                    6);     // Phi
+    EXPECT_EQ(instV5->GetLinearNumber(),                    7);
+    EXPECT_EQ(instV6->GetLinearNumber(),                    8);
+    EXPECT_EQ(instTermLoopBodyBB->GetLinearNumber(),        9);
+    EXPECT_EQ(instV7->GetLinearNumber(),                    10);
+    EXPECT_EQ(instTermLoopExitBB->GetLinearNumber(),        11);
+
+
+    auto& EntryBB_LiveRange = EntryBB->GetLiveRange();
+    EXPECT_TRUE(EntryBB_LiveRange.IsValid());
+    EXPECT_EQ(EntryBB_LiveRange, VMIR::LiveRange(0, 6));
+
+    auto& LoopPreheaderBB_LiveRange = LoopPreheaderBB->GetLiveRange();
+    EXPECT_TRUE(LoopPreheaderBB_LiveRange.IsValid());
+    EXPECT_EQ(LoopPreheaderBB_LiveRange, VMIR::LiveRange(6, 12));
+
+    auto& LoopHeaderBB_LiveRange = LoopHeaderBB->GetLiveRange();
+    EXPECT_TRUE(LoopHeaderBB_LiveRange.IsValid());
+    EXPECT_EQ(LoopHeaderBB_LiveRange, VMIR::LiveRange(12, 16));
+
+    auto& LoopBodyBB_LiveRange = LoopBodyBB->GetLiveRange();
+    EXPECT_TRUE(LoopBodyBB_LiveRange.IsValid());
+    EXPECT_EQ(LoopBodyBB_LiveRange, VMIR::LiveRange(16, 24));
+
+    auto& LoopExitBB_LiveRange = LoopExitBB->GetLiveRange();
+    EXPECT_TRUE(LoopExitBB_LiveRange.IsValid());
+    EXPECT_EQ(LoopExitBB_LiveRange, VMIR::LiveRange(24, 28));
+
+
+    EXPECT_EQ(instV1->GetLiveNumber(),                      2);
+    EXPECT_EQ(instTermEntryBB->GetLiveNumber(),             4);
+    EXPECT_EQ(instV2->GetLiveNumber(),                      8);
+    EXPECT_EQ(instTermLoopPreheaderBB->GetLiveNumber(),     10);
+    EXPECT_EQ(instV3->GetLiveNumber(),                      12);
+    EXPECT_EQ(instTermLoopHeaderBB->GetLiveNumber(),        14);
+    EXPECT_EQ(instV4->GetLiveNumber(),                      16);    // Phi
+    EXPECT_EQ(instV5->GetLiveNumber(),                      18);
+    EXPECT_EQ(instV6->GetLiveNumber(),                      20);
+    EXPECT_EQ(instTermLoopBodyBB->GetLiveNumber(),          22);
+    EXPECT_EQ(instV7->GetLiveNumber(),                      24);
+    EXPECT_EQ(instTermLoopExitBB->GetLiveNumber(),          26);
+
+
+    auto& instV1_LiveInterval = instV1->GetLiveInterval();
+    EXPECT_TRUE(instV1_LiveInterval.IsValid());
+    EXPECT_EQ(instV1_LiveInterval, VMIR::LiveInterval(2, 4));
+
+    auto& instV2_LiveInterval = instV2->GetLiveInterval();
+    EXPECT_TRUE(instV2_LiveInterval.IsValid());
+    EXPECT_EQ(instV2_LiveInterval, VMIR::LiveInterval(8, 12));
+
+    auto& instV3_LiveInterval = instV3->GetLiveInterval();
+    EXPECT_TRUE(instV3_LiveInterval.IsValid());
+    EXPECT_EQ(instV3_LiveInterval, VMIR::LiveInterval(12, 20));
+
+    // Phi
+    auto& instV4_LiveInterval = instV4->GetLiveInterval();
+    EXPECT_TRUE(instV4_LiveInterval.IsValid());
+    EXPECT_EQ(instV4_LiveInterval, VMIR::LiveInterval(16, 18));
+
+    auto& instV5_LiveInterval = instV5->GetLiveInterval();
+    EXPECT_TRUE(instV5_LiveInterval.IsValid());
+    EXPECT_EQ(instV5_LiveInterval, VMIR::LiveInterval(18, 20));
+
+    auto& instV6_LiveInterval = instV6->GetLiveInterval();
+    EXPECT_TRUE(instV6_LiveInterval.IsValid());
+    EXPECT_EQ(instV6_LiveInterval, VMIR::LiveInterval(20, 24));
+
+    auto& instV7_LiveInterval = instV7->GetLiveInterval();
+    EXPECT_TRUE(instV7_LiveInterval.IsValid());
+    EXPECT_EQ(instV7_LiveInterval, VMIR::LiveInterval(24, 26));
 
 
     IrBuilder->Cleanup();
