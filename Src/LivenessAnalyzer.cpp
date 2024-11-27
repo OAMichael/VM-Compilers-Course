@@ -93,15 +93,14 @@ void LivenessAnalyzer::VisitLoopBlock(BasicBlock* bb, std::set<BasicBlock*>& exi
         }
     };
 
-    // For reducible loops one the successors is always can be visited (no external edges into body)
-    // With only possible exception of loop header, but are already there. So, it obeys the rules anyway
-    // So we try false successor first and then true one
-    if (CheckIfBlockCanBeVisited(falseSucc)) {
+    // Try false successor first and then true one. Then false again, since it can be allowed to visit after true one was visited
+    if (falseSucc != nullptr && !falseSucc->IsMarked(BasicBlock::Marker::Black) && CheckIfBlockCanBeVisited(falseSucc)) {
         VisitSuccessor(falseSucc);
+    }
+    if (trueSucc != nullptr && !trueSucc->IsMarked(BasicBlock::Marker::Black) && CheckIfBlockCanBeVisited(trueSucc)) {
         VisitSuccessor(trueSucc);
     }
-    else {
-        VisitSuccessor(trueSucc);
+    if (falseSucc != nullptr && !falseSucc->IsMarked(BasicBlock::Marker::Black) && CheckIfBlockCanBeVisited(falseSucc)) {
         VisitSuccessor(falseSucc);
     }
 }
