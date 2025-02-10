@@ -9,6 +9,7 @@ set(VMIR_UTILS_SOURCES
     ControlFlowGraph.cpp
     LoopAnalyzer.cpp
     LivenessAnalyzer.cpp
+    RegisterAllocator.cpp
 )
 
 add_library(${VMIR_UTILS_NAME} STATIC ${VMIR_UTILS_SOURCES})

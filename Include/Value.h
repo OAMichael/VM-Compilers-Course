@@ -75,11 +75,70 @@ constexpr ValueType TypeToValueType() {
     return ValueType::Unknown;
 }
 
-class Instruction;
+
+constexpr uint64_t kInstructionLiveDiffSpillFill = 2;
+
+struct LiveRange {
+    uint64_t start;
+    uint64_t end;
+
+    void UniteWith(const LiveRange& other) {
+        // Ignore potential live holes
+        if (start == end) {
+            start = other.start;
+            end = other.end;
+        }
+        else {
+            start = std::min(start, other.start);
+            end = std::max(end, other.end);
+        }
+    }
+
+    inline bool IsValid() const {
+        if (end <= start || end - start < kInstructionLiveDiffSpillFill) {
+            return false;
+        }
+        return true;
+    }
+
+    inline bool operator==(const LiveRange& other) const {
+        return start == other.start && end == other.end;
+    }
+};
+
+// These two are pretty similar
+using LiveInterval = LiveRange;
 
 using ValueId = int64_t;
 using InstructionId = int64_t;
 using BasicBlockId = int64_t;
+
+// General Purpose Register
+struct GPRegisterLocation {
+    uint32_t registerId;
+
+    bool operator==(const GPRegisterLocation&) const = default;
+    bool operator!=(const GPRegisterLocation&) const = default;
+};
+
+// Floating Point Register
+struct FPRegisterLocation {
+    uint32_t registerId;
+
+    bool operator==(const FPRegisterLocation&) const = default;
+    bool operator!=(const FPRegisterLocation&) const = default;
+};
+
+struct StackLocation {
+    uint32_t stackLocationId;
+
+    bool operator==(const StackLocation&) const = default;
+    bool operator!=(const StackLocation&) const = default;
+};
+
+using Location = std::variant<GPRegisterLocation, FPRegisterLocation, StackLocation>;
+
+class Instruction;
 
 class Value {
 public:
@@ -126,6 +185,28 @@ public:
     // Getters. Value class is deliberately immutable, so no setters
     inline ValueType GetValueType() const { return mValueType; } 
 
+    inline bool IsIntegralValueType() const {
+        switch (GetValueType()) {
+            default:                    return false;
+            case ValueType::Int8:
+            case ValueType::Int16:
+            case ValueType::Int32:
+            case ValueType::Int64:
+            case ValueType::Uint8:
+            case ValueType::Uint16:
+            case ValueType::Uint32:
+            case ValueType::Uint64:     return true;
+        }
+    }
+
+    inline bool IsFloatingPointValueType() const {
+        switch (GetValueType()) {
+            default:                    return false;
+            case ValueType::Float32:
+            case ValueType::Float64:    return true;
+        }
+    }
+
     inline bool HasValue() const { return mValue.has_value(); }
 
     template <typename T>
@@ -146,6 +227,12 @@ public:
 
     inline Instruction* GetProducer() const { return mProducer; }
     inline void SetProducer(Instruction* prod) { mProducer = prod; }
+
+    inline LiveInterval& GetLiveInterval() { return mLiveInterval; }
+    inline const LiveInterval& GetLiveInterval() const { return mLiveInterval; }
+
+    inline Location GetLocation() const { return mLocation; }
+    inline void SetLocation(Location loc) { mLocation = loc; }
 
     inline std::string GetValueStr() const {
         if (HasValue()) {
@@ -179,6 +266,8 @@ private:
 
     std::set<Instruction*> mUsers{};
     Instruction* mProducer{};
+    LiveInterval mLiveInterval{};
+    Location mLocation{};
 };
 
 }   // namespace VMIR

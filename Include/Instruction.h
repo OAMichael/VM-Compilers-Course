@@ -11,39 +11,6 @@ namespace VMIR {
 class BasicBlock;
 class Function;
 
-constexpr uint64_t kInstructionLiveDiffSpillFill = 2;
-
-struct LiveRange {
-    uint64_t start;
-    uint64_t end;
-
-    void UniteWith(const LiveRange& other) {
-        // Ignore potential live holes
-        if (start == end) {
-            start = other.start;
-            end = other.end;
-        }
-        else {
-            start = std::min(start, other.start);
-            end = std::max(end, other.end);
-        }
-    }
-
-    inline bool IsValid() const {
-        if (end <= start || end - start < kInstructionLiveDiffSpillFill) {
-            return false;
-        }
-        return true;
-    }
-
-    inline bool operator==(const LiveRange& other) const {
-        return start == other.start && end == other.end;
-    }
-};
-
-// These two are pretty similar
-using LiveInterval = LiveRange;
-
 enum class InstructionType {
     Add = 0,
     Sub,
@@ -114,7 +81,7 @@ public:
     virtual std::string GetAsString() const = 0;
     virtual bool IsValid() const = 0;
     virtual bool IsTerminator() const { return false; }
-    virtual Value* GetOutput() { return nullptr; }
+    virtual Value* GetOutput() const { return nullptr; }
 
     bool IsArithmetic() const { return mType == InstructionType::Add
                                     || mType == InstructionType::Sub
@@ -158,8 +125,8 @@ public:
     inline uint64_t GetLiveNumber() const { return mLiveNumber; }
     inline void SetLiveNumber(uint64_t live) { mLiveNumber = live; }
 
-    inline LiveInterval& GetLiveInterval() { return mLiveInterval; }
-    inline const LiveInterval& GetLiveInterval() const { return mLiveInterval; }
+    inline LiveInterval& GetLiveInterval() { return GetOutput()->GetLiveInterval(); }
+    inline const LiveInterval& GetLiveInterval() const { return GetOutput()->GetLiveInterval(); }
 
 protected:
     InstructionType mType{};
@@ -167,7 +134,6 @@ protected:
     BasicBlock* mParentBasicBlock{nullptr};
     uint64_t mLinearNumber{0};
     uint64_t mLiveNumber{0};
-    LiveInterval mLiveInterval{};
 
     Instruction* mPrev{};
     Instruction* mNext{};
@@ -185,7 +151,7 @@ public:
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
-    virtual Value* GetOutput() override { return mOutput; }
+    virtual Value* GetOutput() const override { return mOutput; }
 
     // Getters
     inline Value* GetInput1() { return mInput1; }
@@ -327,7 +293,7 @@ public:
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
-    virtual Value* GetOutput() override { return mOutput; }
+    virtual Value* GetOutput() const override { return mOutput; }
 
     // Getters
     inline Value* GetLoadPtr() { return mLoadPtr; }
@@ -503,7 +469,7 @@ public:
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
-    virtual Value* GetOutput() override { return mOutput; }
+    virtual Value* GetOutput() const override { return mOutput; }
 
     // Getters
     inline Function* GetFunction() { return mFunction; }
@@ -560,7 +526,7 @@ public:
     
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
-    virtual Value* GetOutput() override { return mOutput; }
+    virtual Value* GetOutput() const override { return mOutput; }
 
     // Getters
     inline size_t GetCount() const { return mCount; }
@@ -587,7 +553,7 @@ public:
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
-    virtual Value* GetOutput() override { return mOutput; }
+    virtual Value* GetOutput() const override { return mOutput; }
 
     // Getters
     inline const std::set<Value*>& GetInputs() const { return mInputs; }

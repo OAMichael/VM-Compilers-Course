@@ -9,6 +9,7 @@
 #include <ControlFlowGraph.h>
 #include <LoopAnalyzer.h>
 #include <LivenessAnalyzer.h>
+#include <RegisterAllocator.h>
 
 namespace VMIR {
 
@@ -220,6 +221,11 @@ public:
         return livenessAnalyzer;
     }
 
+    inline RegisterAllocator* CreateRegisterAllocator(ControlFlowGraph* graph, uint32_t GPRegCount, uint32_t FPRegCount) {
+        RegisterAllocator* registerAllocator = new RegisterAllocator(graph, GPRegCount, FPRegCount);
+        mRegisterAllocators.insert({graph, registerAllocator});
+        return registerAllocator;
+    }
 
     inline ControlFlowGraph* GetOrCreateControlFlowGraph(Function* function) {
         if (auto it = mGraphs.find(function); it != mGraphs.end()) {
@@ -240,6 +246,13 @@ public:
             return it->second;
         }
         return CreateLivenessAnalyzer(graph);
+    }
+
+    inline RegisterAllocator* GetOrCreateRegisterAllocator(ControlFlowGraph* graph, uint32_t GPRegCount, uint32_t FPRegCount) {
+        if (auto it = mRegisterAllocators.find(graph); it != mRegisterAllocators.end()) {
+            return it->second;
+        }
+        return CreateRegisterAllocator(graph, GPRegCount, FPRegCount);
     }
 
     inline void Cleanup() {
@@ -271,6 +284,9 @@ public:
         for (const auto& la : mLivenessAnalyzers) {
             delete la.second;
         }
+        for (const auto& ra : mRegisterAllocators) {
+            delete ra.second;
+        }
 
         mBasicBlocks.clear();
         mFunctions.clear();
@@ -280,6 +296,7 @@ public:
         mGraphs.clear();
         mLoopAnalyzers.clear();
         mLivenessAnalyzers.clear();
+        mRegisterAllocators.clear();
     }
 
     void PrintDebug(std::ostream& out);
@@ -296,6 +313,7 @@ private:
     std::unordered_map<Function*, ControlFlowGraph*> mGraphs{};
     std::unordered_map<ControlFlowGraph*, LoopAnalyzer*> mLoopAnalyzers{};
     std::unordered_map<ControlFlowGraph*, LivenessAnalyzer*> mLivenessAnalyzers{};
+    std::unordered_map<ControlFlowGraph*, RegisterAllocator*> mRegisterAllocators{};
 };
 
 }

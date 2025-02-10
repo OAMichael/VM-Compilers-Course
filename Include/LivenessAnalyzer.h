@@ -17,6 +17,7 @@ public:
     inline ControlFlowGraph* GetGraph() const { return mGraph; }
     inline const std::vector<BasicBlock*>& GetBasicBlocksLinearOrder() const { return mBBLinearOrder; }
     inline LoopAnalyzer* GetLoopAnalyzer() const { return mLoopAnalyzer; }
+    inline bool IsAnalysisDone() const { return mIsAnalysisDone; }
 
 private:
     void CreateBasicBlocksLinearOrder(BasicBlock* entry);
@@ -31,6 +32,7 @@ private:
     ControlFlowGraph* mGraph{nullptr};
     LoopAnalyzer* mLoopAnalyzer{nullptr};
     std::vector<BasicBlock*> mBBLinearOrder;
+    bool mIsAnalysisDone{false};
 };
 
 }   // namespace VMIR

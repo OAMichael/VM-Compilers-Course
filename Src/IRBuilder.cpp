@@ -1,5 +1,7 @@
 #include <IRBuilder.h>
 
+#include <iomanip>
+
 namespace VMIR {
 
 IRBuilder* IRBuilder::mInstancePtr = nullptr;
@@ -859,47 +861,52 @@ void IRBuilder::PrintDebug(std::ostream& out) {
         out << "\n";
 
         out << "    Users:\n";
-        for (const auto* v : mValuesWithData.at(f)) {
-            for (const auto* i : v->GetUsers()) {
-                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+        if (auto it = mValuesWithData.find(f); it != mValuesWithData.cend()) {
+            const auto& values = it->second;
+            for (const auto* v : values) {
+                for (const auto* i : v->GetUsers()) {
+                    out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+                }
             }
         }
-        for (const auto* v : mValues.at(f)) {
-            for (const auto* i : v->GetUsers()) {
-                out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+        if (auto it = mValues.find(f); it != mValues.cend()) {
+            const auto& values = it->second;
+            for (const auto* v : values) {
+                for (const auto* i : v->GetUsers()) {
+                    out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+                }
             }
         }
         out << "\n";
 
         out << "    Producers:\n";
-        for (const auto* v : mValuesWithData.at(f)) {
-            Instruction* prod = v->GetProducer();
-            if (prod != nullptr) {
-                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
-            }
-            else {
-                out << "        " << v->GetValueStr() << " -> null\n";
+        if (auto it = mValuesWithData.find(f); it != mValuesWithData.cend()) {
+            const auto& values = it->second;
+            for (const auto* v : values) {
+                Instruction* prod = v->GetProducer();
+                if (prod != nullptr) {
+                    out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
+                }
+                else {
+                    out << "        " << v->GetValueStr() << " -> null\n";
+                }
             }
         }
-        for (const auto* v : mValues.at(f)) {
-            Instruction* prod = v->GetProducer();
-            if (prod != nullptr) {
-                out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
-            }
-            else {
-                out << "        " << v->GetValueStr() << " -> null\n";
+        if (auto it = mValues.find(f); it != mValues.cend()) {
+            const auto& values = it->second;
+            for (const auto* v : values) {
+                Instruction* prod = v->GetProducer();
+                if (prod != nullptr) {
+                    out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
+                }
+                else {
+                    out << "        " << v->GetValueStr() << " -> null\n";
+                }
             }
         }
         out << "\n";
 
-        ControlFlowGraph* graph = nullptr;
-        if (auto it = mGraphs.find(f); it != mGraphs.end()) {
-            graph = it->second;
-        }
-        else {
-            graph = CreateControlFlowGraph(f);
-        }
-
+        ControlFlowGraph* graph = GetOrCreateControlFlowGraph(f);
         if (!graph->IsDominatorTreeBuilt()) {
             graph->BuildDominatorTree();
         }
@@ -927,6 +934,66 @@ void IRBuilder::PrintDebug(std::ostream& out) {
             out << "]\n";
         }
         out << "\n";
+
+        LivenessAnalyzer* livenessAnalyzer = GetOrCreateLivenessAnalyzer(graph);
+        if (!livenessAnalyzer->IsAnalysisDone()) {
+            livenessAnalyzer->PerformLivenessAnalysis();
+        }
+
+        out << "    Liveness:\n";
+        out << "        Linear order:\n";
+        for (const auto* bb : livenessAnalyzer->GetBasicBlocksLinearOrder()) {
+            if (bb->GetParentFunction() != f) {
+                continue;
+            }
+
+            out << "            " << bb->GetName() << ":\n";
+            out << std::right << std::setw(70) << "live: " << bb->GetLiveRange().start << "\n";
+            auto* inst = bb->Front();
+            while (inst) {
+                out << "                " << std::left << std::setw(44) << inst->GetAsString() << "    live: " << std::left << std::setw(8) << std::to_string(inst->GetLiveNumber()) + "," << "lin: " << inst->GetLinearNumber() << "\n";
+                inst = inst->GetNext();
+            }
+            out << std::right << std::setw(70) << "live: " << bb->GetLiveRange().end << "\n";
+        }
+        out << "\n";
+
+        out << "        Live intervals:\n";
+        if (auto it = mValues.find(f); it != mValues.cend()) {
+            const auto& values = it->second;
+            for (const auto* v : values) {
+                out << "            " << v->GetValueStr() << ": [" << v->GetLiveInterval().start << ", " << v->GetLiveInterval().end << ")\n";
+            }
+        }
+        out << "\n";
+
+        if (auto it = mRegisterAllocators.find(graph); it != mRegisterAllocators.cend()) {
+            RegisterAllocator* registerAllocator = it->second;
+
+            out << "    Register Allocation (GPR = " << registerAllocator->GetGPRegisterCount() << ", FPR = " << registerAllocator->GetFPRegisterCount() << "):\n";
+            for (const auto* v : mValues.at(f)) {
+                // TODO: function argument values. Should I account for function argument values? Or their locations are assured by calling convention?
+                const auto& fArgs = f->GetArgs();
+                if (std::count(fArgs.begin(), fArgs.end(), v)) {
+                    continue;
+                }
+
+                Location loc = v->GetLocation();
+
+                out << "        " << v->GetValueStr() << " -> ";
+                if (std::holds_alternative<GPRegisterLocation>(loc)) {
+                    out << "r" << std::get<GPRegisterLocation>(loc).registerId;
+                }
+                else if (std::holds_alternative<FPRegisterLocation>(loc)) {
+                    out << "f" << std::get<FPRegisterLocation>(loc).registerId;
+                }
+                else {
+                    out << "s" << std::get<StackLocation>(loc).stackLocationId;
+                }
+                out << "\n";
+            }
+            out << "\n";
+        }
     }
 }
 

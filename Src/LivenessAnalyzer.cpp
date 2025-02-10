@@ -26,6 +26,7 @@ bool LivenessAnalyzer::PerformLivenessAnalysis() {
         bb->SetUnmarked();
     }
 
+    mIsAnalysisDone = true;
     return true;
 }
 
@@ -260,7 +261,7 @@ void LivenessAnalyzer::AssignLinearAndLiveNumbers() {
 
 
 void LivenessAnalyzer::CalculateLiveRanges() {
-    std::unordered_map<BasicBlock*, std::set<Instruction*>> bbLivesets;
+    std::unordered_map<BasicBlock*, std::set<Value*>> bbLivesets;
     for (auto it = mBBLinearOrder.rbegin(), end = mBBLinearOrder.rend(); it != end; ++it) {
         BasicBlock* bb = *it;
         auto& liveset = bbLivesets[bb];
@@ -271,8 +272,8 @@ void LivenessAnalyzer::CalculateLiveRanges() {
             // Union of livesets of the successors' livesets
             if (auto succIt = bbLivesets.find(succ); succIt != bbLivesets.end()) {
                 auto& succLiveset = succIt->second;
-                for (auto* inst : succLiveset) {
-                    liveset.insert(inst);
+                for (auto* value : succLiveset) {
+                    liveset.insert(value);
                 }
             }
 
@@ -283,32 +284,35 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                 for (auto* value : phiInputs) {
                     Instruction* producer = value->GetProducer();
                     if (producer != nullptr && producer->GetParentBasicBlock() == bb) {
-                        liveset.insert(producer);
+                        liveset.insert(value);
                     }
                 }
                 succInst = succInst->GetNext();
             }
         }
 
-        // For each instruction in the liveset append liverange of the block
-        for (auto* inst : liveset) {
+        // For each value in the liveset append liverange of the block
+        for (auto* value : liveset) {
             // Ignore potential live holes
-            LiveInterval& instLI = inst->GetLiveInterval();
-            instLI.UniteWith(bbLiveRange);
+            LiveInterval& valueLI = value->GetLiveInterval();
+            valueLI.UniteWith(bbLiveRange);
         }
 
         // Reverse iterate over block non-phi instructions
         Instruction* bbInst = bb->Back();
         while (bbInst != nullptr && !bbInst->IsPhi()) {
-            // Shorten live interval of the instruction
-            LiveInterval& bbInstLI = bbInst->GetLiveInterval();
-            bbInstLI.start = bbInst->GetLiveNumber();
-            
-            // Minimal instruction liverange is [Ln, Ln + 2) (kInstructionLiveDiffSpillFill == 2)
-            bbInstLI.UniteWith(LiveInterval(bbInstLI.start, bbInstLI.start + kInstructionLiveDiffSpillFill));
+            Value* instOutput = bbInst->GetOutput();
+            if (instOutput) {
+                // Shorten live interval of the value
+                LiveInterval& bbValueLI = bbInst->GetLiveInterval();
+                bbValueLI.start = bbInst->GetLiveNumber();
 
-            // Remove the instruction from the liveset
-            liveset.erase(bbInst);
+                // Minimal value liverange is [Ln, Ln + 2) (kInstructionLiveDiffSpillFill == 2)
+                bbValueLI.UniteWith(LiveInterval(bbValueLI.start, bbValueLI.start + kInstructionLiveDiffSpillFill));
+
+                // Remove the instruction from the liveset
+                liveset.erase(instOutput);
+            }
 
             // Iterate over instruction's inputs (it's pity we don't have unified interface for that)
             // Add input to liveset and append [BB_START, inst_live_num) to input live range
@@ -326,39 +330,35 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                 case InstructionType::Shl:
                 case InstructionType::Shr: {
                     InstructionArithmetic* instArith = static_cast<InstructionArithmetic*>(bbInst);
-                    Instruction* producer1 = instArith->GetInput1()->GetProducer();
-                    Instruction* producer2 = instArith->GetInput2()->GetProducer();
-                    if (producer1 != nullptr) {
-                        liveset.insert(producer1);
-                        producer1->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
-                    if (producer2 != nullptr) {
-                        liveset.insert(producer2);
-                        producer2->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
+
+                    Value* input1 = instArith->GetInput1();
+                    liveset.insert(input1);
+                    input1->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
+                    Value* input2 = instArith->GetInput2();
+                    liveset.insert(input2);
+                    input2->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
                     break;
                 }
                 case InstructionType::Load: {
                     InstructionLoad* instLoad = static_cast<InstructionLoad*>(bbInst);
-                    Instruction* producerPtr = instLoad->GetLoadPtr()->GetProducer();
-                    if (producerPtr != nullptr) {
-                        liveset.insert(producerPtr);
-                        producerPtr->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
+                    Value* loadPtr = instLoad->GetLoadPtr();
+                    liveset.insert(loadPtr);
+                    loadPtr->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     break;
                 }
                 case InstructionType::Store: {
                     InstructionStore* instStore = static_cast<InstructionStore*>(bbInst);
-                    Instruction* producerPtr = instStore->GetStorePtr()->GetProducer();
-                    Instruction* producer = instStore->GetInput()->GetProducer();
-                    if (producerPtr != nullptr) {
-                        liveset.insert(producerPtr);
-                        producerPtr->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
-                    if (producer != nullptr) {
-                        liveset.insert(producer);
-                        producer->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
+
+                    Value* storePtr = instStore->GetStorePtr();
+                    liveset.insert(storePtr);
+                    storePtr->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
+                    Value* input = instStore->GetInput();
+                    liveset.insert(input);
+                    input->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
                     break;
                 }
                 case InstructionType::Beq:
@@ -368,37 +368,32 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                 case InstructionType::Bge:
                 case InstructionType::Ble: {
                     InstructionBranch* instBranch = static_cast<InstructionBranch*>(bbInst);
-                    Instruction* producer1 = instBranch->GetInput1()->GetProducer();
-                    Instruction* producer2 = instBranch->GetInput2()->GetProducer();
-                    if (producer1 != nullptr) {
-                        liveset.insert(producer1);
-                        producer1->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
-                    if (producer2 != nullptr) {
-                        liveset.insert(producer2);
-                        producer2->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                    }
+
+                    Value* input1 = instBranch->GetInput1();
+                    liveset.insert(input1);
+                    input1->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
+                    Value* input2 = instBranch->GetInput2();
+                    liveset.insert(input2);
+                    input2->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
                     break;
                 }
                 case InstructionType::Call: {
                     InstructionCall* instCall = static_cast<InstructionCall*>(bbInst);
                     const auto& args = instCall->GetArguments();
                     for (auto* arg : args) {
-                        Instruction* producer = arg->GetProducer();
-                        if (producer != nullptr) {
-                            liveset.insert(producer);
-                            producer->GetLiveInterval().UniteWith(liveRangeBBToInst);
-                        }
+                        liveset.insert(arg);
+                        arg->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     }
                     break;
                 }
                 case InstructionType::Ret: {
                     InstructionRet* instRet = static_cast<InstructionRet*>(bbInst);
                     Value* returnValue = instRet->GetReturnValue();
-                    if (returnValue != nullptr && returnValue->GetProducer() != nullptr) {
-                        Instruction* producer = returnValue->GetProducer();
-                        liveset.insert(producer);
-                        producer->GetLiveInterval().UniteWith(liveRangeBBToInst);
+                    if (returnValue != nullptr) {
+                        liveset.insert(returnValue);
+                        returnValue->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     }
                     break;
                 }
@@ -410,7 +405,7 @@ void LivenessAnalyzer::CalculateLiveRanges() {
         // After iterating over instructions remove phi in current block from liveset
         bbInst = bb->Front();
         while (bbInst != nullptr && bbInst->IsPhi()) {
-            liveset.erase(bbInst);
+            liveset.erase(bbInst->GetOutput());
             bbInst = bbInst->GetNext();
         }
 
@@ -423,9 +418,9 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                 loopLiveRange.end = std::max(loopLiveRange.end, latch->GetLiveRange().end);
             }
 
-            for (auto* inst : liveset) {
-                LiveInterval& instLI = inst->GetLiveInterval();
-                instLI.UniteWith(loopLiveRange);
+            for (auto* value : liveset) {
+                LiveInterval& valueLI = value->GetLiveInterval();
+                valueLI.UniteWith(loopLiveRange);
             }
         }
     }
