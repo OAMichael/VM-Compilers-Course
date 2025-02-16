@@ -328,7 +328,8 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                 case InstructionType::Or:
                 case InstructionType::Xor:
                 case InstructionType::Shl:
-                case InstructionType::Shr: {
+                case InstructionType::Shr:
+                case InstructionType::Ashr: {
                     InstructionArithmetic* instArith = static_cast<InstructionArithmetic*>(bbInst);
 
                     Value* input1 = instArith->GetInput1();
@@ -395,6 +396,13 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                         liveset.insert(returnValue);
                         returnValue->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     }
+                    break;
+                }
+                case InstructionType::Mv: {
+                    InstructionMv* instMv = static_cast<InstructionMv*>(bbInst);
+                    Value* input = instMv->GetInput();
+                    liveset.insert(input);
+                    input->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     break;
                 }
             }

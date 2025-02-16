@@ -79,6 +79,30 @@ public:
         return v;
     }
 
+    template <typename T>
+    requires NumericType<T>
+    inline Value* GetOrCreateValueWithData(Function* parentFunction, const T value) {
+        if (parentFunction == nullptr) {
+            return nullptr;
+        }
+
+        if (auto it = mValuesWithData.find(parentFunction); it == mValuesWithData.end()) {
+            auto& values = it->second;
+
+            auto dataIt = std::find_if(values.begin(), values.end(), [value](Value* v){
+                if (v->GetValueType() != TypeToValueType<T>()) {
+                    return false;
+                }
+                return v->GetValue<T>().value() == value;
+            });
+
+            if (dataIt != values.end()) {
+                return *dataIt;
+            }
+        }
+
+        return CreateValue<T>(parentFunction, value);
+    }
 
     InstructionAdd* CreateAdd();
     InstructionAdd* CreateAdd(Value* input1, Value* input2, Value* output);
@@ -129,6 +153,11 @@ public:
     InstructionShr* CreateShr(Value* input1, Value* input2, Value* output);
     InstructionShr* CreateShr(BasicBlock* parentBasicBlock);
     InstructionShr* CreateShr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
+
+    InstructionAshr* CreateAshr();
+    InstructionAshr* CreateAshr(Value* input1, Value* input2, Value* output);
+    InstructionAshr* CreateAshr(BasicBlock* parentBasicBlock);
+    InstructionAshr* CreateAshr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output);
 
     InstructionLoad* CreateLoad();
     InstructionLoad* CreateLoad(Value* loadPtr, Value* output);
@@ -202,6 +231,24 @@ public:
     InstructionPhi* CreatePhi(BasicBlock* parentBasicBlock);
     InstructionPhi* CreatePhi(BasicBlock* parentBasicBlock, const std::set<Value*>& inputs, Value* output);
 
+    InstructionMv* CreateMv();
+    InstructionMv* CreateMv(Value* input, Value* output);
+    InstructionMv* CreateMv(BasicBlock* parentBasicBlock);
+    InstructionMv* CreateMv(BasicBlock* parentBasicBlock, Value* input, Value* output);
+
+    void RemoveInstruction(Instruction* inst) {
+        if (!inst || inst->GetId() == -1) {
+            return;
+        }
+        mInstructions.erase(inst->GetId());
+    }
+
+    void RemoveValue(Value* value) {
+        if (!value) {
+            return;
+        }
+        // TODO
+    }
 
     inline ControlFlowGraph* CreateControlFlowGraph(Function* function) {
         ControlFlowGraph* cfg = new ControlFlowGraph(function);
@@ -299,9 +346,15 @@ public:
         mRegisterAllocators.clear();
     }
 
+    void PrintIR(std::ostream& out);
     void PrintDebug(std::ostream& out);
 
 private:
+    static InstructionId GenerateNewInstructionId() {
+        static InstructionId id = -1;
+        return ++id;
+    }
+
     std::vector<BasicBlock*> mBasicBlocks{};
     std::vector<Function*> mFunctions{};
 

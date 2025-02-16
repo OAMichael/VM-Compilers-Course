@@ -10,6 +10,7 @@ set(VMIR_UTILS_SOURCES
     LoopAnalyzer.cpp
     LivenessAnalyzer.cpp
     RegisterAllocator.cpp
+    PeepholesPass.cpp
 )
 
 add_library(${VMIR_UTILS_NAME} STATIC ${VMIR_UTILS_SOURCES})

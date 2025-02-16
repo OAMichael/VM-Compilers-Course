@@ -25,11 +25,11 @@ public:
 
     using MarkerFlags = uint32_t;
 
-    BasicBlock(const Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
+    BasicBlock(Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
     : mParentFunction{parentFunction}, mId{id}, mName{name} {};
 
-    inline const Function *GetParentFunction() const { return mParentFunction; }
-    inline void SetParentFunction(const Function* parentFunction) { mParentFunction = parentFunction; }
+    inline Function *GetParentFunction() const { return mParentFunction; }
+    inline void SetParentFunction(Function* parentFunction) { mParentFunction = parentFunction; }
 
     inline BasicBlockId GetId() const { return mId; }
     inline void SetId(const BasicBlockId id) { mId = id; }
@@ -273,7 +273,7 @@ public:
     }
 
 private:
-    const Function* mParentFunction{nullptr};
+    Function* mParentFunction{nullptr};
     BasicBlockId mId{-1};
     std::string mName{};
 

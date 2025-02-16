@@ -22,6 +22,7 @@ enum class InstructionType {
     Xor,
     Shl,
     Shr,
+    Ashr,
     Load,
     Store,
     Jump,
@@ -35,6 +36,7 @@ enum class InstructionType {
     Ret,
     Alloc,
     Phi,
+    Mv,
 
     Unknown
 };
@@ -54,6 +56,7 @@ static inline const char *InstructionTypeToStr(const InstructionType it) {
         case InstructionType::Xor:      return "Xor";
         case InstructionType::Shl:      return "Shl";
         case InstructionType::Shr:      return "Shr";
+        case InstructionType::Ashr:     return "Ashr";
         case InstructionType::Load:     return "Load";
         case InstructionType::Store:    return "Store";
         case InstructionType::Jump:     return "Jump";
@@ -67,6 +70,7 @@ static inline const char *InstructionTypeToStr(const InstructionType it) {
         case InstructionType::Ret:      return "Ret";
         case InstructionType::Alloc:    return "Alloc";
         case InstructionType::Phi:      return "Phi";
+        case InstructionType::Mv:       return "Mv";
     }
 }
 
@@ -277,6 +281,15 @@ public:
 
     InstructionShr(const InstructionId id, Value* input1, Value* input2, Value* output)
     : InstructionBitwise(InstructionType::Shr, id, input1, input2, output) {};
+};
+
+class InstructionAshr final : public InstructionBitwise {
+public:
+    // Constructors
+    InstructionAshr(const InstructionId id) : InstructionBitwise(InstructionType::Ashr, id) {};
+
+    InstructionAshr(const InstructionId id, Value* input1, Value* input2, Value* output)
+    : InstructionBitwise(InstructionType::Ashr, id, input1, input2, output) {};
 };
 
 
@@ -568,6 +581,33 @@ public:
 
 private:
     std::set<Value*> mInputs{};
+    Value* mOutput;
+};
+
+
+
+// Mv instruction
+
+class InstructionMv final : public Instruction {
+public:
+    // Constructors
+    InstructionMv(const InstructionId id) : Instruction(InstructionType::Mv, id) {};
+    InstructionMv(const InstructionId id, Value* input, Value* output)
+    : Instruction(InstructionType::Mv, id), mInput{input}, mOutput{output} {};
+
+    virtual std::string GetAsString() const override;
+    virtual bool IsValid() const override;
+    virtual Value* GetOutput() const override { return mOutput; }
+
+    // Getters
+    inline Value* GetInput() const { return mInput; }
+
+    // Setters
+    inline void SetInput(Value* input) { mInput = input; }
+    inline void SetOutput(Value* value) { mOutput = value; }
+
+private:
+    Value* mInput;
     Value* mOutput;
 };
 

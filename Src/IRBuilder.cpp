@@ -66,7 +66,7 @@ InstructionAdd* IRBuilder::CreateAdd(BasicBlock* parentBasicBlock) {
 }
 
 InstructionAdd* IRBuilder::CreateAdd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionAdd* inst = new InstructionAdd(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -98,7 +98,7 @@ InstructionSub* IRBuilder::CreateSub(BasicBlock* parentBasicBlock) {
 }
 
 InstructionSub* IRBuilder::CreateSub(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionSub* inst = new InstructionSub(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -130,7 +130,7 @@ InstructionMul* IRBuilder::CreateMul(BasicBlock* parentBasicBlock) {
 }
 
 InstructionMul* IRBuilder::CreateMul(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionMul* inst = new InstructionMul(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -162,7 +162,7 @@ InstructionDiv* IRBuilder::CreateDiv(BasicBlock* parentBasicBlock) {
 }
 
 InstructionDiv* IRBuilder::CreateDiv(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionDiv* inst = new InstructionDiv(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -194,7 +194,7 @@ InstructionRem* IRBuilder::CreateRem(BasicBlock* parentBasicBlock) {
 }
 
 InstructionRem* IRBuilder::CreateRem(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionRem* inst = new InstructionRem(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -226,7 +226,7 @@ InstructionAnd* IRBuilder::CreateAnd(BasicBlock* parentBasicBlock) {
 }
 
 InstructionAnd* IRBuilder::CreateAnd(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionAnd* inst = new InstructionAnd(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -258,7 +258,7 @@ InstructionOr* IRBuilder::CreateOr(BasicBlock* parentBasicBlock) {
 }
 
 InstructionOr* IRBuilder::CreateOr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionOr* inst = new InstructionOr(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -290,7 +290,7 @@ InstructionXor* IRBuilder::CreateXor(BasicBlock* parentBasicBlock) {
 }
 
 InstructionXor* IRBuilder::CreateXor(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionXor* inst = new InstructionXor(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -322,7 +322,7 @@ InstructionShl* IRBuilder::CreateShl(BasicBlock* parentBasicBlock) {
 }
 
 InstructionShl* IRBuilder::CreateShl(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionShl* inst = new InstructionShl(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -354,8 +354,40 @@ InstructionShr* IRBuilder::CreateShr(BasicBlock* parentBasicBlock) {
 }
 
 InstructionShr* IRBuilder::CreateShr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionShr* inst = new InstructionShr(id, input1, input2, output);
+    if (parentBasicBlock != nullptr) {
+        parentBasicBlock->AppendInstruction(inst);
+    }
+    if (input1 != nullptr) {
+        input1->AddUser(inst);
+    }
+    if (input2 != nullptr) {
+        input2->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
+    return inst;
+}
+
+
+InstructionAshr* IRBuilder::CreateAshr() {
+    return CreateAshr(nullptr, nullptr, nullptr, nullptr);
+}
+
+InstructionAshr* IRBuilder::CreateAshr(Value* input1, Value* input2, Value* output) {
+    return CreateAshr(nullptr, input1, input2, output);
+}
+
+InstructionAshr* IRBuilder::CreateAshr(BasicBlock* parentBasicBlock) {
+    return CreateAshr(parentBasicBlock, nullptr, nullptr, nullptr);
+}
+
+InstructionAshr* IRBuilder::CreateAshr(BasicBlock* parentBasicBlock, Value* input1, Value* input2, Value* output) {
+    InstructionId id = GenerateNewInstructionId();
+    InstructionAshr* inst = new InstructionAshr(id, input1, input2, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
     }
@@ -386,7 +418,7 @@ InstructionLoad* IRBuilder::CreateLoad(BasicBlock* parentBasicBlock) {
 }
 
 InstructionLoad* IRBuilder::CreateLoad(BasicBlock* parentBasicBlock, Value* loadPtr, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionLoad* inst = new InstructionLoad(id, loadPtr, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -415,7 +447,7 @@ InstructionStore* IRBuilder::CreateStore(BasicBlock* parentBasicBlock) {
 }
 
 InstructionStore* IRBuilder::CreateStore(BasicBlock* parentBasicBlock, Value* storePtr, Value* input) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionStore* inst = new InstructionStore(id, storePtr, input);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -440,7 +472,7 @@ InstructionJump* IRBuilder::CreateJump(BasicBlock* parentBasicBlock) {
 }
 
 InstructionJump* IRBuilder::CreateJump(BasicBlock* parentBasicBlock, BasicBlock *jumpBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionJump* inst = new InstructionJump(id, jumpBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -467,7 +499,7 @@ InstructionBeq* IRBuilder::CreateBeq(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBeq* IRBuilder::CreateBeq(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBeq* inst = new InstructionBeq(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -504,7 +536,7 @@ InstructionBne* IRBuilder::CreateBne(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBne* IRBuilder::CreateBne(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBne* inst = new InstructionBne(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -541,7 +573,7 @@ InstructionBgt* IRBuilder::CreateBgt(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBgt* IRBuilder::CreateBgt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBgt* inst = new InstructionBgt(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -578,7 +610,7 @@ InstructionBlt* IRBuilder::CreateBlt(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBlt* IRBuilder::CreateBlt(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBlt* inst = new InstructionBlt(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -615,7 +647,7 @@ InstructionBge* IRBuilder::CreateBge(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBge* IRBuilder::CreateBge(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBge* inst = new InstructionBge(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -652,7 +684,7 @@ InstructionBle* IRBuilder::CreateBle(BasicBlock* parentBasicBlock) {
 }
 
 InstructionBle* IRBuilder::CreateBle(BasicBlock* parentBasicBlock, Value* input1, Value* input2, BasicBlock *trueBB, BasicBlock *falseBB) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionBle* inst = new InstructionBle(id, input1, input2, trueBB, falseBB);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -705,7 +737,7 @@ InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* f
 }
 
 InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionCall* inst = new InstructionCall(id, function, ret);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -722,7 +754,7 @@ InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* f
 }
 
 InstructionCall* IRBuilder::CreateCall(BasicBlock* parentBasicBlock, Function* function, Value* ret, const std::vector<Value*>& args) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionCall* inst = new InstructionCall(id, function, ret, args);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -751,7 +783,7 @@ InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock) {
 }
 
 InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, Value* returnValue) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionRet* inst = new InstructionRet(id, returnValue);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -785,7 +817,7 @@ InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* ou
 }
 
 InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output, const size_t count) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionAlloc* inst = new InstructionAlloc(id, output, count);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -811,7 +843,7 @@ InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock) {
 }
 
 InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const std::set<Value*>& inputs, Value* output) {
-    InstructionId id = mInstructions.size();
+    InstructionId id = GenerateNewInstructionId();
     InstructionPhi* inst = new InstructionPhi(id, inputs, output);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
@@ -827,10 +859,46 @@ InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const std::se
 }
 
 
+InstructionMv* IRBuilder::CreateMv() {
+    return CreateMv(nullptr, nullptr, nullptr);
+}
+
+InstructionMv* IRBuilder::CreateMv(Value* input, Value* output) {
+    return CreateMv(nullptr, input, output);
+}
+
+InstructionMv* IRBuilder::CreateMv(BasicBlock* parentBasicBlock) {
+    return CreateMv(parentBasicBlock, nullptr, nullptr);
+}
+
+InstructionMv* IRBuilder::CreateMv(BasicBlock* parentBasicBlock, Value* input, Value* output) {
+    InstructionId id = GenerateNewInstructionId();
+    InstructionMv* inst = new InstructionMv(id, input, output);
+    if (parentBasicBlock != nullptr) {
+        parentBasicBlock->AppendInstruction(inst);
+    }
+    if (input != nullptr) {
+        input->AddUser(inst);
+    }
+    if (output != nullptr) {
+        output->SetProducer(inst);
+    }
+    mInstructions.insert({id, inst});
+    return inst;
+}
+
+
 IRBuilder::~IRBuilder() {
     Cleanup();
 }
 
+
+void IRBuilder::PrintIR(std::ostream& out) {
+    for (auto* f : mFunctions) {
+        f->Print(out);
+        out << "\n\n";
+    }
+}
 
 void IRBuilder::PrintDebug(std::ostream& out) {
     for (auto* f : mFunctions) {

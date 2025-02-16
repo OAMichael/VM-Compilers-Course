@@ -262,4 +262,20 @@ bool InstructionPhi::IsValid() const {
 }
 
 
+std::string InstructionMv::GetAsString() const {
+    const std::string inName = mInput->GetValueStr();
+    const std::string outName = mOutput->GetValueStr();
+    const std::string inIdStr = ValueTypeToIdStr(mInput->GetValueType());
+    const std::string opTypeStr = InstructionTypeToStr(mType);
+    return outName + " = " + opTypeStr + " " + inIdStr + " " + inName;
+}
+
+bool InstructionMv::IsValid() const {
+    return mId != -1 && mParentBasicBlock != nullptr
+        && mInput != nullptr && mOutput != nullptr
+        && mInput->IsValid() && mOutput->IsValid()
+        && mInput->GetValueType() == mOutput->GetValueType()
+        && mInput->GetValueType() != ValueType::Unknown;
+}
+
 }   // namespace VMIR

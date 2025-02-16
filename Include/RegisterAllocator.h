@@ -7,8 +7,6 @@
 
 #include <ControlFlowGraph.h>
 
-#include <iostream>
-
 namespace VMIR {
 
 class RegisterAllocator {

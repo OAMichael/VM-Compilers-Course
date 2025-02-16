@@ -211,11 +211,11 @@ public:
 
     template <typename T>
     requires NumericType<T>
-    inline T GetValue() const {
+    inline std::optional<T> GetValue() const {
         if (HasValue()) {
             return std::get<std::remove_cv_t<T>>(*mValue);
         }
-        return T();
+        return std::nullopt;
     } 
 
     inline ValueId GetId() const { return mId; }
@@ -239,16 +239,16 @@ public:
             switch (GetValueType()) {
                 default:
                 case ValueType::Pointer:    break;
-                case ValueType::Int8:       return std::to_string(GetValue<int8_t>());
-                case ValueType::Int16:      return std::to_string(GetValue<int16_t>());
-                case ValueType::Int32:      return std::to_string(GetValue<int32_t>());
-                case ValueType::Int64:      return std::to_string(GetValue<int64_t>());
-                case ValueType::Uint8:      return std::to_string(GetValue<uint8_t>());
-                case ValueType::Uint16:     return std::to_string(GetValue<uint16_t>());
-                case ValueType::Uint32:     return std::to_string(GetValue<uint32_t>());
-                case ValueType::Uint64:     return std::to_string(GetValue<uint64_t>());
-                case ValueType::Float32:    return std::to_string(GetValue<float>());
-                case ValueType::Float64:    return std::to_string(GetValue<double>());
+                case ValueType::Int8:       return std::to_string(GetValue<int8_t>().value());
+                case ValueType::Int16:      return std::to_string(GetValue<int16_t>().value());
+                case ValueType::Int32:      return std::to_string(GetValue<int32_t>().value());
+                case ValueType::Int64:      return std::to_string(GetValue<int64_t>().value());
+                case ValueType::Uint8:      return std::to_string(GetValue<uint8_t>().value());
+                case ValueType::Uint16:     return std::to_string(GetValue<uint16_t>().value());
+                case ValueType::Uint32:     return std::to_string(GetValue<uint32_t>().value());
+                case ValueType::Uint64:     return std::to_string(GetValue<uint64_t>().value());
+                case ValueType::Float32:    return std::to_string(GetValue<float>().value());
+                case ValueType::Float64:    return std::to_string(GetValue<double>().value());
             }
         }
         return "v" + std::to_string(GetId());
