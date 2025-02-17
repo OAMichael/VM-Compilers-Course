@@ -12,11 +12,12 @@ public:
     virtual void Run(Function* func) const override;
 
 private:
-    void PerformSingleAddPeephole(InstructionAdd* inst) const;
+    bool PerformSingleAddPeephole(InstructionAdd* inst) const;
 
-    void PerformSingleAshrPeephole(InstructionAshr* inst) const;
+    bool PerformSingleAshrPeephole(InstructionAshr* inst) const;
+    bool PerformComplexAshrPeephole(InstructionAshr* inst) const;
 
-    void PerformSingleAndPeephole(InstructionAnd* inst) const;
+    bool PerformSingleAndPeephole(InstructionAnd* inst) const;
 };
 
 }   // namespace VMIR

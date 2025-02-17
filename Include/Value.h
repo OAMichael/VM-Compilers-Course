@@ -270,6 +270,27 @@ private:
     Location mLocation{};
 };
 
+
+static inline bool IsValueZero(Value* value) {
+    if (!value || !value->HasValue()) {
+        return false;
+    }
+
+    switch (value->GetValueType()) {
+        default:                    return false;
+        case ValueType::Int8:       return value->GetValue<int8_t>()   == int8_t(0);
+        case ValueType::Int16:      return value->GetValue<int16_t>()  == int16_t(0);
+        case ValueType::Int32:      return value->GetValue<int32_t>()  == int32_t(0);
+        case ValueType::Int64:      return value->GetValue<int64_t>()  == int64_t(0);
+        case ValueType::Uint8:      return value->GetValue<uint8_t>()  == uint8_t(0);
+        case ValueType::Uint16:     return value->GetValue<uint16_t>() == uint16_t(0);
+        case ValueType::Uint32:     return value->GetValue<uint32_t>() == uint32_t(0);
+        case ValueType::Uint64:     return value->GetValue<uint64_t>() == uint64_t(0);
+        case ValueType::Float32:    return value->GetValue<float>()    == float(0.0f);
+        case ValueType::Float64:    return value->GetValue<double>()   == double(0.0);
+    }
+}
+
 }   // namespace VMIR
 
 #endif  // VALUE_H
