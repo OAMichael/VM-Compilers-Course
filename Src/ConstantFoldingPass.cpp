@@ -37,7 +37,8 @@ Instruction* ConstantFoldingPass::OptimizeInstructionAndGetNext(Instruction* ins
         currInst = OptimizeInstructionArithmetic(instArith);
     }
 
-    // If current instruction is Mv with constant (was or appeared to be such due to optimization above), then iterate over all users and inplace the constant
+    // If current instruction is Mv with constant (was or appeared to be such due to optimization above),
+    // then iterate over all users and inplace the constant (except for phi)
     Instruction* next = currInst->GetNext();
     if (currInst->GetType() == InstructionType::Mv) {
         InstructionMv* instMv = static_cast<InstructionMv*>(currInst);
@@ -47,7 +48,10 @@ Instruction* ConstantFoldingPass::OptimizeInstructionAndGetNext(Instruction* ins
             BasicBlock* bb = currInst->GetParentBasicBlock();
             auto users = outputMv->GetUsers();
             for (Instruction* user : users) {
-                ReplaceMoveUserInputWithConstant(user, instMv);
+                // Do not touch phi at all
+                if (user->GetType() != InstructionType::Phi) {
+                    ReplaceMoveUserInputWithConstant(user, instMv);
+                }
 
                 // If user is arithmetic or move, then optimize it recursively
                 if (user->IsArithmetic() || user->GetType() == InstructionType::Mv) {
@@ -56,11 +60,12 @@ Instruction* ConstantFoldingPass::OptimizeInstructionAndGetNext(Instruction* ins
             }
 
             next = instMv->GetNext();
-
-            inputMv->RemoveUser(instMv);
-            outputMv->SetProducer(nullptr);
-            bb->RemoveInstruction(instMv);
-            IrBuilder->RemoveInstruction(instMv);
+            if (outputMv->GetUsers().empty()) {
+                inputMv->RemoveUser(instMv);
+                outputMv->SetProducer(nullptr);
+                bb->RemoveInstruction(instMv);
+                IrBuilder->RemoveInstruction(instMv);
+            }
         }
     }
 

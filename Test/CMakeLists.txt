@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
+add_custom_target(run_all_tests)
+
 add_subdirectory(DominatorTree)
 add_subdirectory(LoopAnalyzer)
 add_subdirectory(LivenessAnalyzer)

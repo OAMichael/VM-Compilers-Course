@@ -20,3 +20,5 @@ add_custom_target(run_dominator_tree_tests
     COMMENT "Running dominator tree tests"
     VERBATIM
 )
+
+add_dependencies(run_all_tests run_dominator_tree_tests)

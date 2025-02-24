@@ -20,3 +20,5 @@ add_custom_target(run_register_allocator_tests
     COMMENT "Running register allocator tests"
     VERBATIM
 )
+
+add_dependencies(run_all_tests run_register_allocator_tests)

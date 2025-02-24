@@ -20,3 +20,5 @@ add_custom_target(run_loop_analyzer_tests
     COMMENT "Running loop analyzer tests"
     VERBATIM
 )
+
+add_dependencies(run_all_tests run_loop_analyzer_tests)

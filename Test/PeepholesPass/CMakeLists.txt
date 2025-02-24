@@ -20,3 +20,5 @@ add_custom_target(run_peepholes_pass_tests
     COMMENT "Running peepholes pass tests"
     VERBATIM
 )
+
+add_dependencies(run_all_tests run_peepholes_pass_tests)

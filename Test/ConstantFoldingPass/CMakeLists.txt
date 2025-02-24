@@ -20,3 +20,5 @@ add_custom_target(run_constant_folding_pass_tests
     COMMENT "Running constant folding pass tests"
     VERBATIM
 )
+
+add_dependencies(run_all_tests run_constant_folding_pass_tests)
