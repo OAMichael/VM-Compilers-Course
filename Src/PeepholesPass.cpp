@@ -1,5 +1,4 @@
 #include <PeepholesPass.h>
-#include <IRBuilder.h>
 
 namespace VMIR {
 
@@ -17,8 +16,9 @@ PeepholesPass::PeepholesPass() : Pass(PEEPHOLES_PASS_NAME) {}
     Ashr:
         [ v2 = Ashr i64 v1, 0 ]     -->     [ v2 = Mv i64 v1 ]
 
-        [ v2 = Ashr i64 v1, n ]     -->     [ v3 = And i64 v1, ~(2^n - 1) ]
-        [ v3 = Shl i64 v2, n ]
+        [ v2 = Ashr i64 v1, n ]             [ v2 = Ashr i64 v1, n ] (if v2 has users other than Shl)
+        [ v3 = Shl i64 v2, n ]     -->     / [ v3 = And i64 v1, ~(2^n - 1) ], if n < type bit count  \
+                                           \ [ v3 = Mv i64 0 ],               if n >= type bit count /
 
     And:
         [ v2 = And ui64 v1, 0 ]     -->     [ v2 = Mv ui64 0 ]
@@ -38,7 +38,9 @@ void PeepholesPass::Run(Function* func) const {
                     break;
                 }
                 case InstructionType::Ashr: {
-                    PerformSingleAshrPeephole(static_cast<InstructionAshr*>(inst));
+                    if (!PerformComplexAshrPeephole(static_cast<InstructionAshr*>(inst))) {
+                        PerformSingleAshrPeephole(static_cast<InstructionAshr*>(inst));
+                    }
                     break;
                 }
                 case InstructionType::And: {
@@ -52,86 +54,42 @@ void PeepholesPass::Run(Function* func) const {
     }
 }
 
-void PeepholesPass::PerformSingleAddPeephole(InstructionAdd* inst) const {
+
+/*
+    [ v2 = Add ui64 v1, 0 ]     -->     [ v2 = Mv ui64 v1 ]
+
+    [ v2 = Add ui64 v1, v1 ]    -->     [ v2 = Shl ui64 v1, 1 ]
+*/
+bool PeepholesPass::PerformSingleAddPeephole(InstructionAdd* inst) const {
     IRBuilder* IrBuilder = IRBuilder::GetInstance();
 
+    BasicBlock* bb = inst->GetParentBasicBlock();
     Value* input1 = inst->GetInput1();
     Value* input2 = inst->GetInput2();
     Value* output = inst->GetOutput();
 
-    // Check if second value is zero
-    if (input2->HasValue()) {
-        bool isZero = false;
-        switch (input2->GetValueType()) {
-            default: break;
-            case ValueType::Int8: {
-                isZero = input2->GetValue<int8_t>() == int8_t(0);
-                break;
-            }
-            case ValueType::Int16: {
-                isZero = input2->GetValue<int16_t>() == int16_t(0);
-                break;
-            }
-            case ValueType::Int32: {
-                isZero = input2->GetValue<int32_t>() == int32_t(0);
-                break;
-            }
-            case ValueType::Int64: {
-                isZero = input2->GetValue<int64_t>() == int64_t(0);
-                break;
-            }
-            case ValueType::Uint8: {
-                isZero = input2->GetValue<uint8_t>() == uint8_t(0);
-                break;
-            }
-            case ValueType::Uint16: {
-                isZero = input2->GetValue<uint16_t>() == uint16_t(0);
-                break;
-            }
-            case ValueType::Uint32: {
-                isZero = input2->GetValue<uint32_t>() == uint32_t(0);
-                break;
-            }
-            case ValueType::Uint64: {
-                isZero = input2->GetValue<uint64_t>() == uint64_t(0);
-                break;
-            }
-            case ValueType::Float32: {
-                isZero = input2->GetValue<float>() == float(0.0f);
-                break;
-            }
-            case ValueType::Float64: {
-                isZero = input2->GetValue<double>() == double(0.0);
-                break;
-            }
-        }
+    // Check if second value is zero and replace Add with Mv ...
+    if (IsValueZero(input2)) {
+        InstructionMv* instMv = IrBuilder->CreateMv();
+        instMv->SetInput(input1);
+        instMv->SetOutput(output);
 
-        // Replace Add with Mv ...
-        if (isZero) {
-            BasicBlock* bb = inst->GetParentBasicBlock();
+        input1->RemoveUser(inst);
+        input2->RemoveUser(inst);
 
-            InstructionMv* instMv = IrBuilder->CreateMv();
-            instMv->SetInput(input1);
-            instMv->SetOutput(output);
+        input1->AddUser(instMv);
+        output->SetProducer(instMv);
 
-            input1->RemoveUser(inst);
-            input2->RemoveUser(inst);
-            output->RemoveUser(inst);
+        bb->InsertInstructionBefore(instMv, inst);
+        bb->RemoveInstruction(inst);
 
-            input1->AddUser(instMv);
-            output->AddUser(instMv);
+        IrBuilder->RemoveInstruction(inst);
 
-            bb->InsertInstructionBefore(instMv, inst);
-            bb->RemoveInstruction(inst);
-
-            IrBuilder->RemoveInstruction(inst);
-        }
+        return true;
     }
 
     // Replace Add with Shl ...
     if (input1 == input2 && input1->IsIntegralValueType()) {
-        BasicBlock* bb = inst->GetParentBasicBlock();
-
         Value* shift1 = nullptr;
         switch (input1->GetValueType()) {
             default: break;
@@ -174,27 +132,214 @@ void PeepholesPass::PerformSingleAddPeephole(InstructionAdd* inst) const {
         instShl->SetInput2(shift1);
         instShl->SetOutput(output);
 
+        // input1 == input2
         input1->RemoveUser(inst);
-        input2->RemoveUser(inst);
-        output->RemoveUser(inst);
 
         input1->AddUser(instShl);
         shift1->AddUser(instShl);
-        output->AddUser(instShl);
+        output->SetProducer(instShl);
 
         bb->InsertInstructionBefore(instShl, inst);
         bb->RemoveInstruction(inst);
 
         IrBuilder->RemoveInstruction(inst);
+
+        return true;
     }
+
+    return false;
 }
 
-void PeepholesPass::PerformSingleAshrPeephole(InstructionAshr* inst) const {
-    (void)inst;
+
+/*
+    [ v2 = Ashr i64 v1, 0 ]     -->     [ v2 = Mv i64 v1 ]
+*/
+bool PeepholesPass::PerformSingleAshrPeephole(InstructionAshr* inst) const {
+    IRBuilder* IrBuilder = IRBuilder::GetInstance();
+
+    BasicBlock* bb = inst->GetParentBasicBlock();
+    Value* input1 = inst->GetInput1();
+    Value* input2 = inst->GetInput2();
+    Value* output = inst->GetOutput();
+
+    // Check if second value is zero and replace Ashr with Mv ...
+    if (IsValueZero(input2)) {
+        InstructionMv* instMv = IrBuilder->CreateMv();
+        instMv->SetInput(input1);
+        instMv->SetOutput(output);
+
+        input1->RemoveUser(inst);
+        input2->RemoveUser(inst);
+
+        input1->AddUser(instMv);
+        output->SetProducer(instMv);
+
+        bb->InsertInstructionBefore(instMv, inst);
+        bb->RemoveInstruction(inst);
+
+        IrBuilder->RemoveInstruction(inst);
+
+        return true;
+    }
+
+    return false;
 }
 
-void PeepholesPass::PerformSingleAndPeephole(InstructionAnd* inst) const {
-    (void)inst;
+
+// It was quite hard to invent simple peepholes with Ashr, so, we need to match a specific pattern
+/*
+    [ v2 = Ashr i64 v1, n ]             [ v2 = Ashr i64 v1, n ] (if v2 has users other than Shl)
+    [ v3 = Shl i64 v2, n ]     -->     / [ v3 = And i64 v1, ~(2^n - 1) ], if n < type bit count  \
+                                       \ [ v3 = Mv i64 0 ],               if n >= type bit count /
+*/
+bool PeepholesPass::PerformComplexAshrPeephole(InstructionAshr* inst) const {
+    Instruction* next = inst->GetNext();
+    if (!next || next->GetType() != InstructionType::Shl) {
+        return false;
+    }
+
+    IRBuilder* IrBuilder = IRBuilder::GetInstance();
+
+    BasicBlock* bb = inst->GetParentBasicBlock();
+    InstructionShl* lShift = static_cast<InstructionShl*>(next);
+
+    Value* rShiftInput1 = inst->GetInput1();
+    Value* rShiftInput2 = inst->GetInput2();
+    Value* rShiftOutput = inst->GetOutput();
+
+    Value* lShiftInput1 = lShift->GetInput1();
+    Value* lShiftInput2 = lShift->GetInput2();
+    Value* lShiftOutput = lShift->GetOutput();
+
+    if (rShiftOutput->GetValueType() != lShiftOutput->GetValueType()) {
+        return false;
+    }
+
+    if (!rShiftInput2->HasValue() || !lShiftInput2->HasValue() || lShiftInput1 != rShiftOutput) {
+        return false;
+    }
+
+    switch (rShiftInput2->GetValueType()) {
+        default: break;
+        case ValueType::Int8: {
+            if (AreValuesHoldSameConstants<int8_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<int8_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Int16: {
+            if (AreValuesHoldSameConstants<int16_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<int16_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Int32: {
+            if (AreValuesHoldSameConstants<int32_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<int32_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Int64: {
+            if (AreValuesHoldSameConstants<int64_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<int64_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Uint8: {
+            if (AreValuesHoldSameConstants<uint8_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<uint8_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Uint16: {
+            if (AreValuesHoldSameConstants<uint16_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<uint16_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Uint32: {
+            if (AreValuesHoldSameConstants<uint32_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<uint32_t>(inst, lShift);
+            }
+            break;
+        }
+        case ValueType::Uint64: {
+            if (AreValuesHoldSameConstants<uint64_t>(rShiftInput2, lShiftInput2)) {
+                ReplaceShlWithMvOrZero<uint64_t>(inst, lShift);
+            }
+            break;
+        }
+    }
+
+    // Check if Ashr output has users after these operations and if not, erase the instruction
+    if (rShiftOutput->GetUsers().empty()) {
+        rShiftInput1->RemoveUser(inst);
+        rShiftInput2->RemoveUser(inst);
+        rShiftOutput->SetProducer(nullptr);
+
+        bb->RemoveInstruction(inst);
+
+        IrBuilder->RemoveInstruction(inst);
+    }
+
+    return true;
+}
+
+
+/*
+    [ v2 = And ui64 v1, 0 ]     -->     [ v2 = Mv ui64 0 ]
+
+    [ v2 = And ui64 v1, v1 ]    -->     [ v2 = Mv ui64 v1 ]
+*/
+bool PeepholesPass::PerformSingleAndPeephole(InstructionAnd* inst) const {
+    IRBuilder* IrBuilder = IRBuilder::GetInstance();
+
+    BasicBlock* bb = inst->GetParentBasicBlock();
+    Value* input1 = inst->GetInput1();
+    Value* input2 = inst->GetInput2();
+    Value* output = inst->GetOutput();
+
+    // Check if second value is zero and replace And with Mv ...
+    if (IsValueZero(input2)) {
+        InstructionMv* instMv = IrBuilder->CreateMv();
+        instMv->SetInput(input2);
+        instMv->SetOutput(output);
+
+        input1->RemoveUser(inst);
+        input2->RemoveUser(inst);
+
+        input2->AddUser(instMv);
+        output->SetProducer(instMv);
+
+        bb->InsertInstructionBefore(instMv, inst);
+        bb->RemoveInstruction(inst);
+
+        IrBuilder->RemoveInstruction(inst);
+
+        return true;
+    }
+
+    // Replace And with Mv ...
+    if (input1 == input2) {
+        InstructionMv* instMv = IrBuilder->CreateMv();
+        instMv->SetInput(input1);
+        instMv->SetOutput(output);
+
+        // input1 == input2
+        input1->RemoveUser(inst);
+
+        input1->AddUser(instMv);
+        output->SetProducer(instMv);
+
+        bb->InsertInstructionBefore(instMv, inst);
+        bb->RemoveInstruction(inst);
+
+        IrBuilder->RemoveInstruction(inst);
+
+        return true;
+    }
+
+    return false;
 }
 
 }   // namespace VMIR

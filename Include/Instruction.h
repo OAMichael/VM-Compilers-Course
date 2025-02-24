@@ -96,7 +96,8 @@ public:
                                     || mType == InstructionType::Or
                                     || mType == InstructionType::Xor
                                     || mType == InstructionType::Shl
-                                    || mType == InstructionType::Shr; }
+                                    || mType == InstructionType::Shr
+                                    || mType == InstructionType::Ashr; }
 
     bool IsBranch() const { return mType == InstructionType::Beq
                                 || mType == InstructionType::Bne
@@ -250,19 +251,19 @@ public:
 class InstructionOr final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionOr(const InstructionId id) : InstructionBitwise(InstructionType::And, id) {};
+    InstructionOr(const InstructionId id) : InstructionBitwise(InstructionType::Or, id) {};
 
     InstructionOr(const InstructionId id, Value* input1, Value* input2, Value* output)
-    : InstructionBitwise(InstructionType::And, id, input1, input2, output) {};
+    : InstructionBitwise(InstructionType::Or, id, input1, input2, output) {};
 };
 
 class InstructionXor final : public InstructionBitwise {
 public:
     // Constructors
-    InstructionXor(const InstructionId id) : InstructionBitwise(InstructionType::And, id) {};
+    InstructionXor(const InstructionId id) : InstructionBitwise(InstructionType::Xor, id) {};
 
     InstructionXor(const InstructionId id, Value* input1, Value* input2, Value* output)
-    : InstructionBitwise(InstructionType::And, id, input1, input2, output) {};
+    : InstructionBitwise(InstructionType::Xor, id, input1, input2, output) {};
 };
 
 class InstructionShl final : public InstructionBitwise {
@@ -493,6 +494,7 @@ public:
     inline void SetFunction(Function* function) { mFunction = function; }
     inline void SetReturnValue(Value* value) { mOutput = value; }
     inline void SetArguments(const std::vector<Value*>& args) { mInputs = args; }
+    inline void SetArgument(size_t idx, Value* arg) { mInputs[idx] = arg; }
 
 private:
     Function* mFunction{nullptr};
