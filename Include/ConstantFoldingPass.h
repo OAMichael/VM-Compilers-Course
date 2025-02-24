@@ -2,6 +2,7 @@
 #define CONSTANT_FOLDING_PASS_H
 
 #include <type_traits>
+#include <bit>
 
 #include <Pass.h>
 
@@ -67,11 +68,11 @@ private:
                 if constexpr (std::is_integral_v<T>) {
                     using UnsignedT = std::make_unsigned_t<T>;
 
-                    UnsignedT ua = static_cast<UnsignedT>(a);
-                    UnsignedT ub = static_cast<UnsignedT>(b);
+                    UnsignedT ua = std::bit_cast<UnsignedT>(a);
+                    UnsignedT ub = std::bit_cast<UnsignedT>(b);
                     UnsignedT res = ua >> ub;
 
-                    return static_cast<T>(res);
+                    return std::bit_cast<T>(res);
                 }
                 return T();
             }
@@ -79,11 +80,11 @@ private:
                 if constexpr (std::is_integral_v<T>) {
                     using SignedT = std::make_signed_t<T>;
 
-                    SignedT sa = static_cast<SignedT>(a);
-                    SignedT sb = static_cast<SignedT>(b);
+                    SignedT sa = std::bit_cast<SignedT>(a);
+                    SignedT sb = std::bit_cast<SignedT>(b);
                     SignedT res = sa >> sb;
 
-                    return static_cast<T>(res);
+                    return std::bit_cast<T>(res);
                 }
                 return T();
             }
