@@ -41,13 +41,13 @@ TEST(register_allocator, fact_recursive_gp) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1);
+    VMIR::Value* zero = IrBuilder->CreateValue(0);
+    VMIR::Value* one  = IrBuilder->CreateValue(1);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
 
     IrBuilder->CreateBeq(BB_1, v0, zero, BB_3, BB_2);
 
@@ -115,13 +115,13 @@ TEST(register_allocator, fact_recursive_fp) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0.0f);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1.0f);
+    VMIR::Value* zero = IrBuilder->CreateValue(0.0f);
+    VMIR::Value* one  = IrBuilder->CreateValue(1.0f);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
 
     IrBuilder->CreateBeq(BB_1, v0, zero, BB_3, BB_2);
 
@@ -198,18 +198,18 @@ TEST(register_allocator, fact_loop_gp) {
 
     Func->SetEntryBasicBlock(EntryBB);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1UL);
-    VMIR::Value* two  = IrBuilder->CreateValue(Func, 2UL);
+    VMIR::Value* zero = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one  = IrBuilder->CreateValue(1UL);
+    VMIR::Value* two  = IrBuilder->CreateValue(2UL);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateAdd(EntryBB, zero, one, v1);
     IrBuilder->CreateJump(EntryBB, LoopPreheaderBB);
@@ -304,18 +304,18 @@ TEST(register_allocator, fact_loop_fp) {
 
     Func->SetEntryBasicBlock(EntryBB);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0.0);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1.0);
-    VMIR::Value* two  = IrBuilder->CreateValue(Func, 2.0);
+    VMIR::Value* zero = IrBuilder->CreateValue(0.0);
+    VMIR::Value* one  = IrBuilder->CreateValue(1.0);
+    VMIR::Value* two  = IrBuilder->CreateValue(2.0);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
 
     IrBuilder->CreateAdd(EntryBB, zero, one, v1);
     IrBuilder->CreateJump(EntryBB, LoopPreheaderBB);
@@ -411,17 +411,17 @@ TEST(register_allocator, from_lecture_1_gp) {
 
     VMIR::Value* v0 = Func->GetArg(0);
     VMIR::Value* v1 = Func->GetArg(1);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v8 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v9 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v10 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v11 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v12 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v8 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v9 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v10 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v11 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v12 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateAdd(BB_0, v0, v1, v2);
     IrBuilder->CreateAdd(BB_0, v0, v1, v3);
@@ -531,17 +531,17 @@ TEST(register_allocator, from_lecture_1_fp) {
 
     VMIR::Value* v0 = Func->GetArg(0);
     VMIR::Value* v1 = Func->GetArg(1);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v8 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v9 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v10 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v11 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v12 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v8 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v9 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v10 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v11 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v12 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
 
     IrBuilder->CreateAdd(BB_0, v0, v1, v2);
     IrBuilder->CreateAdd(BB_0, v0, v1, v3);
@@ -646,19 +646,19 @@ TEST(register_allocator, from_lecture_2) {
 
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* zero   = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* one    = IrBuilder->CreateValue(Func, 1UL);
-    VMIR::Value* ten    = IrBuilder->CreateValue(Func, 10UL);
-    VMIR::Value* twenty = IrBuilder->CreateValue(Func, 20UL);
+    VMIR::Value* zero   = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one    = IrBuilder->CreateValue(1UL);
+    VMIR::Value* ten    = IrBuilder->CreateValue(10UL);
+    VMIR::Value* twenty = IrBuilder->CreateValue(20UL);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateAdd(BB_0, zero, one, v0);
     IrBuilder->CreateAdd(BB_0, zero, ten, v1);
@@ -756,27 +756,27 @@ TEST(register_allocator, mixed_value_types) {
 
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* three      = IrBuilder->CreateValue(Func, 3UL);
-    VMIR::Value* four       = IrBuilder->CreateValue(Func, 4UL);
-    VMIR::Value* sixtyFour  = IrBuilder->CreateValue(Func, 64UL);
-    VMIR::Value* pi         = IrBuilder->CreateValue(Func, 3.14f);
-    VMIR::Value* e          = IrBuilder->CreateValue(Func, 2.718f);
+    VMIR::Value* three      = IrBuilder->CreateValue(3UL);
+    VMIR::Value* four       = IrBuilder->CreateValue(4UL);
+    VMIR::Value* sixtyFour  = IrBuilder->CreateValue(64UL);
+    VMIR::Value* pi         = IrBuilder->CreateValue(3.14f);
+    VMIR::Value* e          = IrBuilder->CreateValue(2.718f);
 
     VMIR::Value* v0  = Func->GetArg(0);
     VMIR::Value* v1  = Func->GetArg(1);
-    VMIR::Value* v2  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4  = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v5  = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v6  = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v7  = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v8  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v9  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v10 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v11 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v12 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v13 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float32);
-    VMIR::Value* v14 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v2  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4  = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v5  = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v6  = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v7  = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v8  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v9  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v10 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v11 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v12 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v13 = IrBuilder->CreateValue(VMIR::ValueType::Float32);
+    VMIR::Value* v14 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateAdd(BB_0, v0, three, v2);
     IrBuilder->CreateMul(BB_0, v2, three, v3);

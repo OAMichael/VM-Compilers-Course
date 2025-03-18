@@ -25,20 +25,20 @@ TEST(peepholes_pass, add_first) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* fourtyTwo  = IrBuilder->CreateValue(Func, 42UL);
-    VMIR::Value* zero       = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* one        = IrBuilder->CreateValue(Func, 1UL);
+    VMIR::Value* fourtyTwo  = IrBuilder->CreateValue(42UL);
+    VMIR::Value* zero       = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one        = IrBuilder->CreateValue(1UL);
 
-    VMIR::Value* pi         = IrBuilder->CreateValue(Func, 3.14);
-    VMIR::Value* zeroF      = IrBuilder->CreateValue(Func, 0.0);
-    VMIR::Value* negOne     = IrBuilder->CreateValue(Func, -1.0);
+    VMIR::Value* pi         = IrBuilder->CreateValue(3.14);
+    VMIR::Value* zeroF      = IrBuilder->CreateValue(0.0);
+    VMIR::Value* negOne     = IrBuilder->CreateValue(-1.0);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
 
     IrBuilder->CreateMv(BB_1, fourtyTwo, v0);
     IrBuilder->CreateAdd(BB_1, v0, zero, v1);
@@ -93,17 +93,17 @@ TEST(peepholes_pass, add_second) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* num    = IrBuilder->CreateValue(Func, 2718UL);
+    VMIR::Value* num    = IrBuilder->CreateValue(2718UL);
 
-    VMIR::Value* e      = IrBuilder->CreateValue(Func, 2.718);
-    VMIR::Value* negOne = IrBuilder->CreateValue(Func, -1.0);
+    VMIR::Value* e      = IrBuilder->CreateValue(2.718);
+    VMIR::Value* negOne = IrBuilder->CreateValue(-1.0);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
 
     IrBuilder->CreateMv(BB_1, num, v0);
     IrBuilder->CreateAdd(BB_1, v0, v0, v1);
@@ -156,14 +156,14 @@ TEST(peepholes_pass, ashr_first) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* zero  = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* three = IrBuilder->CreateValue(Func, 3UL);
-    VMIR::Value* seven = IrBuilder->CreateValue(Func, 7UL);
+    VMIR::Value* zero  = IrBuilder->CreateValue(0UL);
+    VMIR::Value* three = IrBuilder->CreateValue(3UL);
+    VMIR::Value* seven = IrBuilder->CreateValue(7UL);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateMv(BB_1, seven, v0);
     IrBuilder->CreateAshr(BB_1, v0, zero, v1);
@@ -224,25 +224,25 @@ TEST(peepholes_pass, ashr_second) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* seven = IrBuilder->CreateValue(Func, uint64_t(7));
-    VMIR::Value* four  = IrBuilder->CreateValue(Func, uint64_t(4));
+    VMIR::Value* seven = IrBuilder->CreateValue(uint64_t(7));
+    VMIR::Value* four  = IrBuilder->CreateValue(uint64_t(4));
 
-    VMIR::Value* three = IrBuilder->CreateValue(Func, int32_t(3));
-    VMIR::Value* six   = IrBuilder->CreateValue(Func, int32_t(6));
+    VMIR::Value* three = IrBuilder->CreateValue(int32_t(3));
+    VMIR::Value* six   = IrBuilder->CreateValue(int32_t(6));
 
-    VMIR::Value* two   = IrBuilder->CreateValue(Func, int8_t(2));
-    VMIR::Value* nine  = IrBuilder->CreateValue(Func, int8_t(9));
+    VMIR::Value* two   = IrBuilder->CreateValue(int8_t(2));
+    VMIR::Value* nine  = IrBuilder->CreateValue(int8_t(9));
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int8);
-    VMIR::Value* v8 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int8);
-    VMIR::Value* v9 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int8);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Int8);
+    VMIR::Value* v8 = IrBuilder->CreateValue(VMIR::ValueType::Int8);
+    VMIR::Value* v9 = IrBuilder->CreateValue(VMIR::ValueType::Int8);
 
     IrBuilder->CreateMv(BB_1, seven, v0);
     IrBuilder->CreateAshr(BB_1, v0, four, v1);
@@ -313,14 +313,14 @@ TEST(peepholes_pass, and_first) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* thirtySeven = IrBuilder->CreateValue(Func, 37L);
-    VMIR::Value* zero        = IrBuilder->CreateValue(Func, 0L);
-    VMIR::Value* one         = IrBuilder->CreateValue(Func, 1L);
+    VMIR::Value* thirtySeven = IrBuilder->CreateValue(37L);
+    VMIR::Value* zero        = IrBuilder->CreateValue(0L);
+    VMIR::Value* one         = IrBuilder->CreateValue(1L);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Int64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Int64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Int64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int64);
 
     IrBuilder->CreateMv(BB_1, thirtySeven, v0);
     IrBuilder->CreateAnd(BB_1, v0, zero, v1);
@@ -368,13 +368,13 @@ TEST(peepholes_pass, and_second) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* thirtySeven = IrBuilder->CreateValue(Func, 37);
+    VMIR::Value* thirtySeven = IrBuilder->CreateValue(37);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
 
     IrBuilder->CreateMv(BB_1, thirtySeven, v0);
     IrBuilder->CreateAnd(BB_1, v0, v0, v1);

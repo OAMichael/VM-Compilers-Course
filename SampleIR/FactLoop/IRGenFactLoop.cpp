@@ -16,18 +16,18 @@ int main() {
 
     Fact->SetEntryBasicBlock(EntryBB);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0UL);
-    VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1UL);
-    VMIR::Value* two  = IrBuilder->CreateValue(Fact, 2UL);
+    VMIR::Value* zero = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one  = IrBuilder->CreateValue(1UL);
+    VMIR::Value* two  = IrBuilder->CreateValue(2UL);
 
     VMIR::Value* v0 = Fact->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     // EntryBB
     IrBuilder->CreateAdd(EntryBB, zero, one, v1);

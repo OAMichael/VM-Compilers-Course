@@ -25,8 +25,8 @@ public:
 
     using MarkerFlags = uint32_t;
 
-    BasicBlock(Function* parentFunction = nullptr, const BasicBlockId id = -1, const std::string& name = "")
-    : mParentFunction{parentFunction}, mId{id}, mName{name} {};
+    BasicBlock(const BasicBlockId id = -1, Function* parentFunction = nullptr, const std::string& name = "")
+    : mId{id}, mParentFunction{parentFunction}, mName{name} {};
 
     inline Function *GetParentFunction() const { return mParentFunction; }
     inline void SetParentFunction(Function* parentFunction) { mParentFunction = parentFunction; }
@@ -273,8 +273,8 @@ public:
     }
 
 private:
-    Function* mParentFunction{nullptr};
     BasicBlockId mId{-1};
+    Function* mParentFunction{nullptr};
     std::string mName{};
 
     // A basic block contains first and last element of linked list of instruction

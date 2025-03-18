@@ -84,7 +84,7 @@ Instruction* ConstantFoldingPass::OptimizeInstructionArithmetic(InstructionArith
     }
 
     BasicBlock* bb = inst->GetParentBasicBlock();
-    Value* inputMv = GetOrCreateConstantForMove(bb->GetParentFunction(), input1, input2, inst->GetType());
+    Value* inputMv = GetOrCreateConstantForMove(input1, input2, inst->GetType());
 
     InstructionMv* instMv = IrBuilder->CreateMv();
     instMv->SetInput(inputMv);
@@ -105,7 +105,7 @@ Instruction* ConstantFoldingPass::OptimizeInstructionArithmetic(InstructionArith
 }
 
 
-Value* ConstantFoldingPass::GetOrCreateConstantForMove(Function* func, Value* input1, Value* input2, InstructionType op) const {
+Value* ConstantFoldingPass::GetOrCreateConstantForMove(Value* input1, Value* input2, InstructionType op) const {
     IRBuilder* IrBuilder = IRBuilder::GetInstance();
 
     switch (input1->GetValueType()) {
@@ -116,61 +116,61 @@ Value* ConstantFoldingPass::GetOrCreateConstantForMove(Function* func, Value* in
             int8_t a = input1->GetValue<int8_t>().value();
             int8_t b = input2->GetValue<int8_t>().value();
             int8_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<int8_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<int8_t>(res);
         }
         case ValueType::Int16: {
             int16_t a = input1->GetValue<int16_t>().value();
             int16_t b = input2->GetValue<int16_t>().value();
             int16_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<int16_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<int16_t>(res);
         }
         case ValueType::Int32: {
             int32_t a = input1->GetValue<int32_t>().value();
             int32_t b = input2->GetValue<int32_t>().value();
             int32_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<int32_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<int32_t>(res);
         }
         case ValueType::Int64: {
             int64_t a = input1->GetValue<int64_t>().value();
             int64_t b = input2->GetValue<int64_t>().value();
             int64_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<int64_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<int64_t>(res);
         }
         case ValueType::Uint8: {
             uint8_t a = input1->GetValue<uint8_t>().value();
             uint8_t b = input2->GetValue<uint8_t>().value();
             uint8_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<uint8_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<uint8_t>(res);
         }
         case ValueType::Uint16: {
             uint16_t a = input1->GetValue<uint16_t>().value();
             uint16_t b = input2->GetValue<uint16_t>().value();
             uint16_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<uint16_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<uint16_t>(res);
         }
         case ValueType::Uint32: {
             uint32_t a = input1->GetValue<uint32_t>().value();
             uint32_t b = input2->GetValue<uint32_t>().value();
             uint32_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<uint32_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<uint32_t>(res);
         }
         case ValueType::Uint64: {
             uint64_t a = input1->GetValue<uint64_t>().value();
             uint64_t b = input2->GetValue<uint64_t>().value();
             uint64_t res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<uint64_t>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<uint64_t>(res);
         }
         case ValueType::Float32: {
             float a = input1->GetValue<float>().value();
             float b = input2->GetValue<float>().value();
             float res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<float>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<float>(res);
         }
         case ValueType::Float64: {
             double a = input1->GetValue<double>().value();
             double b = input2->GetValue<double>().value();
             double res = PerformValueOperation(a, b, op);
-            return IrBuilder->GetOrCreateValueWithData<double>(func, res);
+            return IrBuilder->GetOrCreateValueWithData<double>(res);
         }
     }
 }

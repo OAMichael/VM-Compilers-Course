@@ -145,39 +145,39 @@ public:
     // Constructors
     Value(const ValueId id = -1) : mId{id} {};
 
-    Value(const Value& other) : mValueType{other.mValueType}, mValue{other.mValue}, mId{other.mId} {};
+    Value(const Value& other) : mId{other.mId}, mValueType{other.mValueType}, mValue{other.mValue} {};
 
-    Value(Value&& other) noexcept : mValueType{std::move(other.mValueType)}, mValue{std::move(other.mValue)}, mId{std::move(other.mId)} {};
+    Value(Value&& other) noexcept : mId{std::move(other.mId)}, mValueType{std::move(other.mValueType)}, mValue{std::move(other.mValue)} {};
 
-    explicit Value(const ValueType vt, const ValueId id) : mValueType{vt}, mId{id} {};
+    explicit Value(const ValueId id, const ValueType vt) : mId{id}, mValueType{vt} {};
 
     template <typename T>
     requires NumericType<T>
-    explicit Value(const ValueId id, const T value) : mValueType{TypeToValueType<T>()}, mValue{value}, mId{id} {};
+    explicit Value(const ValueId id, const T value) : mId{id}, mValueType{TypeToValueType<T>()}, mValue{value} {};
 
     // Operators
     Value& operator=(const Value& other) {
         if (this != &other) { 
+            mId = other.mId;
             mValueType = other.mValueType;
             mValue = other.mValue;
-            mId = other.mId;
         }
         return *this;
     }
 
     Value& operator=(Value&& other) noexcept {
         if (this != &other) {
+            mId = std::move(other.mId);
             mValueType = std::move(other.mValueType);
             mValue = std::move(other.mValue);
-            mId = std::move(other.mId);
         }
         return *this;
     }
 
     bool operator==(const Value& other) {
-        return mValueType == other.mValueType
-            && mValue == other.mValue
-            && mId == other.mId;
+        return mId == other.mId
+            && mValueType == other.mValueType
+            && mValue == other.mValue;
     }
 
     ~Value() {};
@@ -257,12 +257,12 @@ public:
     inline bool IsValid() const { return mId != -1 && mValueType != ValueType::Unknown; }
 
 private:
+    ValueId mId{-1};
+
     ValueType mValueType = ValueType::Unknown;
 
     std::optional<std::variant<int8_t,  int16_t,  int32_t,  int64_t,
                   uint8_t, uint16_t, uint32_t, uint64_t, float, double>> mValue{};
-
-    ValueId mId{-1};
 
     std::set<Instruction*> mUsers{};
     Instruction* mProducer{};

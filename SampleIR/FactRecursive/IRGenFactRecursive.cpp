@@ -15,13 +15,13 @@ int main() {
 
     Fact->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Fact, 0);
-    VMIR::Value* one  = IrBuilder->CreateValue(Fact, 1);
+    VMIR::Value* zero = IrBuilder->CreateValue(0);
+    VMIR::Value* one  = IrBuilder->CreateValue(1);
 
     VMIR::Value* v0 = Fact->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Fact, VMIR::ValueType::Int32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
 
     // BB_1
     IrBuilder->CreateBeq(BB_1, v0, zero, BB_3, BB_2);

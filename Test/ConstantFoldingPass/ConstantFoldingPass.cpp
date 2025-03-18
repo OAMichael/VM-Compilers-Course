@@ -28,9 +28,9 @@ TEST(constant_folding_pass, simple) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* val_pi  = IrBuilder->CreateValue(Func, 3.14);
+    VMIR::Value* val_pi  = IrBuilder->CreateValue(3.14);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Float64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Float64);
 
     IrBuilder->CreateMv(BB_1, val_pi, v0);
     IrBuilder->CreateRet(BB_1, v0);
@@ -79,15 +79,15 @@ TEST(constant_folding_pass, mv_add) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* val_97  = IrBuilder->CreateValue(Func, 97UL);
-    VMIR::Value* val_87  = IrBuilder->CreateValue(Func, 87UL);
-    VMIR::Value* val_314 = IrBuilder->CreateValue(Func, 314UL);
+    VMIR::Value* val_97  = IrBuilder->CreateValue(97UL);
+    VMIR::Value* val_87  = IrBuilder->CreateValue(87UL);
+    VMIR::Value* val_314 = IrBuilder->CreateValue(314UL);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateMv(BB_1, val_97, v0);
     IrBuilder->CreateMv(BB_1, val_87, v1);
@@ -144,20 +144,20 @@ TEST(constant_folding_pass, multiple) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* val_45  = IrBuilder->CreateValue(Func, 45u);
-    VMIR::Value* val_78  = IrBuilder->CreateValue(Func, 78u);
-    VMIR::Value* val_3   = IrBuilder->CreateValue(Func, 3u);
-    VMIR::Value* val_555 = IrBuilder->CreateValue(Func, 555u);
+    VMIR::Value* val_45  = IrBuilder->CreateValue(45u);
+    VMIR::Value* val_78  = IrBuilder->CreateValue(78u);
+    VMIR::Value* val_3   = IrBuilder->CreateValue(3u);
+    VMIR::Value* val_555 = IrBuilder->CreateValue(555u);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v8 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v8 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
 
     IrBuilder->CreateMv(BB_1, val_45, v0);
     IrBuilder->CreateMv(BB_1, val_78, v1);
@@ -237,15 +237,15 @@ TEST(constant_folding_pass, phi_behavior) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* val_45 = IrBuilder->CreateValue(Func, 45u);
-    VMIR::Value* val_1  = IrBuilder->CreateValue(Func, 1u);
-    VMIR::Value* val_67 = IrBuilder->CreateValue(Func, 67u);
-    VMIR::Value* val_55 = IrBuilder->CreateValue(Func, 55u);
+    VMIR::Value* val_45 = IrBuilder->CreateValue(45u);
+    VMIR::Value* val_1  = IrBuilder->CreateValue(1u);
+    VMIR::Value* val_67 = IrBuilder->CreateValue(67u);
+    VMIR::Value* val_55 = IrBuilder->CreateValue(55u);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint32);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint32);
 
     IrBuilder->CreateMv(BB_1, val_45, v0);
     IrBuilder->CreateBeq(BB_1, v0, val_1, BB_2, BB_3);

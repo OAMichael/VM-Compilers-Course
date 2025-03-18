@@ -80,7 +80,7 @@ TEST(liveness_analyzer, linear_order__1) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -115,7 +115,7 @@ TEST(liveness_analyzer, linear_order__2) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -154,7 +154,7 @@ TEST(liveness_analyzer, linear_order__3) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -196,7 +196,7 @@ TEST(liveness_analyzer, linear_order__4) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -240,7 +240,7 @@ TEST(liveness_analyzer, linear_order__5) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -301,7 +301,7 @@ TEST(liveness_analyzer, linear_order__big) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(Start);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(Start, A);
 
@@ -376,7 +376,7 @@ TEST(liveness_analyzer, linear_order__from_lecture_1) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(BB_0, BB_2);
 
@@ -432,7 +432,7 @@ TEST(liveness_analyzer, linear_order__from_lecture_2) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* v1  = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1  = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(BB_0, BB_1);
 
@@ -469,7 +469,7 @@ TEST(liveness_analyzer, linear_order__triple_nested_loop) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -510,7 +510,7 @@ TEST(liveness_analyzer, linear_order__quadruple_nested_loop) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -557,7 +557,7 @@ TEST(liveness_analyzer, linear_order__quintuple_nested_loop) {
     // Just create dummy graph. The fucntion will be invalid but we need only graph
     Func->SetEntryBasicBlock(A);
 
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     IrBuilder->CreateJump(A, B);
 
@@ -627,13 +627,13 @@ TEST(liveness_analyzer, liveness__fact_recursive) {
 
     Func->SetEntryBasicBlock(BB_1);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1);
+    VMIR::Value* zero = IrBuilder->CreateValue(0);
+    VMIR::Value* one  = IrBuilder->CreateValue(1);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Int32);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Int32);
 
     auto* instTermBB_1  = IrBuilder->CreateBeq(BB_1, v0, zero, BB_3, BB_2);
 
@@ -752,18 +752,18 @@ TEST(liveness_analyzer, liveness__fact_loop) {
 
     Func->SetEntryBasicBlock(EntryBB);
 
-    VMIR::Value* zero = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* one  = IrBuilder->CreateValue(Func, 1UL);
-    VMIR::Value* two  = IrBuilder->CreateValue(Func, 2UL);
+    VMIR::Value* zero = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one  = IrBuilder->CreateValue(1UL);
+    VMIR::Value* two  = IrBuilder->CreateValue(2UL);
 
     VMIR::Value* v0 = Func->GetArg(0);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     auto* instV1                    = IrBuilder->CreateAdd(EntryBB, zero, one, v1);
     auto* instTermEntryBB           = IrBuilder->CreateJump(EntryBB, LoopPreheaderBB);
@@ -918,19 +918,19 @@ TEST(liveness_analyzer, liveness__from_lecture_1) {
 
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v8 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v9 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v10 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v11 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v12 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v8 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v9 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v10 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v11 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v12 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     auto* instV2        = IrBuilder->CreateAdd(BB_0, v0, v1, v2);
     auto* instV3        = IrBuilder->CreateAdd(BB_0, v0, v1, v3);
@@ -1103,19 +1103,19 @@ TEST(liveness_analyzer, liveness__from_lecture_2) {
 
     Func->SetEntryBasicBlock(BB_0);
 
-    VMIR::Value* zero   = IrBuilder->CreateValue(Func, 0UL);
-    VMIR::Value* one    = IrBuilder->CreateValue(Func, 1UL);
-    VMIR::Value* ten    = IrBuilder->CreateValue(Func, 10UL);
-    VMIR::Value* twenty = IrBuilder->CreateValue(Func, 20UL);
+    VMIR::Value* zero   = IrBuilder->CreateValue(0UL);
+    VMIR::Value* one    = IrBuilder->CreateValue(1UL);
+    VMIR::Value* ten    = IrBuilder->CreateValue(10UL);
+    VMIR::Value* twenty = IrBuilder->CreateValue(20UL);
 
-    VMIR::Value* v0 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v1 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v2 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v3 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v4 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v5 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v6 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
-    VMIR::Value* v7 = IrBuilder->CreateValue(Func, VMIR::ValueType::Uint64);
+    VMIR::Value* v0 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v1 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v2 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v3 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v4 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v5 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v6 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
+    VMIR::Value* v7 = IrBuilder->CreateValue(VMIR::ValueType::Uint64);
 
     auto* instV0        = IrBuilder->CreateAdd(BB_0, zero, one, v0);
     auto* instV1        = IrBuilder->CreateAdd(BB_0, zero, ten, v1);

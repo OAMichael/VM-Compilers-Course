@@ -22,7 +22,7 @@ private:
     Instruction* OptimizeInstructionArithmetic(InstructionArithmetic* inst) const;
 
     // Helper function to get or create Value which holds calculated resulting constant
-    Value* GetOrCreateConstantForMove(Function* func, Value* input1, Value* input2, InstructionType op) const;
+    Value* GetOrCreateConstantForMove(Value* input1, Value* input2, InstructionType op) const;
     
     void ReplaceMoveUserInputWithConstant(Instruction* user, InstructionMv* instMv) const;
 

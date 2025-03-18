@@ -2,6 +2,7 @@
 #define IR_BUILDER_H
 
 #include <unordered_map>
+#include <limits>
 
 #include <Instruction.h>
 #include <BasicBlock.h>
@@ -43,65 +44,37 @@ public:
     BasicBlock* CreateBasicBlock(Function* parentFunction, const std::string& name);
 
 
-    inline Value* CreateValue(Function* parentFunction, const ValueType vt) {
-        if (parentFunction == nullptr) {
-            return nullptr;
-        }
-
-        if (auto it = mValues.find(parentFunction); it == mValues.end()) {
-            mValues.insert({parentFunction, {}});
-        }
-
-        auto it = mValues.find(parentFunction);
-        auto& funcValues = it->second;
-
-        Value* v = new Value(vt, funcValues.size());
-        funcValues.push_back(v);
+    inline Value* CreateValue(const ValueType vt) {
+        ValueId id = GenerateNewValueId();
+        Value* v = new Value(id, vt);
+        mValues.emplace(id, v);
         return v;
     }
 
     template <typename T>
     requires NumericType<T>
-    inline Value* CreateValue(Function* parentFunction, const T value) {
-        if (parentFunction == nullptr) {
-            return nullptr;
-        }
-
-        if (auto it = mValuesWithData.find(parentFunction); it == mValuesWithData.end()) {
-            mValuesWithData.insert({parentFunction, {}});
-        }
-
-        auto it = mValuesWithData.find(parentFunction);
-        auto& funcValues = it->second;
-
-        Value* v = new Value(funcValues.size(), value);
-        funcValues.push_back(v);
+    inline Value* CreateValue(const T value) {
+        ValueId id = GenerateNewValueWithDataId();
+        Value* v = new Value(id, value);
+        mValuesWithData.emplace(id, v);
         return v;
     }
 
     template <typename T>
     requires NumericType<T>
-    inline Value* GetOrCreateValueWithData(Function* parentFunction, const T value) {
-        if (parentFunction == nullptr) {
-            return nullptr;
-        }
-
-        if (auto it = mValuesWithData.find(parentFunction); it == mValuesWithData.end()) {
-            auto& values = it->second;
-
-            auto dataIt = std::find_if(values.begin(), values.end(), [value](Value* v){
-                if (v->GetValueType() != TypeToValueType<T>()) {
-                    return false;
-                }
-                return v->GetValue<T>().value() == value;
-            });
-
-            if (dataIt != values.end()) {
-                return *dataIt;
+    inline Value* GetOrCreateValueWithData(const T data) {
+        auto it = std::find_if(mValuesWithData.begin(), mValuesWithData.end(), [data](const auto& e) {
+            Value* v = e.second;
+            if (v->GetValueType() != TypeToValueType<T>()) {
+                return false;
             }
-        }
+            return v->GetValue<T>().value() == data;
+        });
 
-        return CreateValue<T>(parentFunction, value);
+        if (it != mValuesWithData.end()) {
+            return it->second;
+        }
+        return CreateValue<T>(data);
     }
 
     InstructionAdd* CreateAdd();
@@ -236,19 +209,47 @@ public:
     InstructionMv* CreateMv(BasicBlock* parentBasicBlock);
     InstructionMv* CreateMv(BasicBlock* parentBasicBlock, Value* input, Value* output);
 
-    void RemoveInstruction(Instruction* inst) {
-        if (!inst || inst->GetId() == -1) {
-            return;
-        }
-        mInstructions.erase(inst->GetId());
-    }
 
     void RemoveValue(Value* value) {
         if (!value) {
             return;
         }
-        // TODO
+
+        ValueId id = value->GetId();
+        if (id == -1) {
+            return;
+        }
+
+        mValues.erase(id);
+        mValuesWithData.erase(id);
     }
+
+    void RemoveInstruction(Instruction* inst) {
+        if (!inst) {
+            return;
+        }
+
+        InstructionId id = inst->GetId();
+        if (id == -1) {
+            return;
+        }
+
+        mInstructions.erase(id);
+    }
+
+    void RemoveBasicBlock(BasicBlock* bb) {
+        if (!bb) {
+            return;
+        }
+
+        BasicBlockId id = bb->GetId();
+        if (id == -1) {
+            return;
+        }
+
+        mBasicBlocks.erase(id);
+    }
+
 
     inline ControlFlowGraph* CreateControlFlowGraph(Function* function) {
         ControlFlowGraph* cfg = new ControlFlowGraph(function);
@@ -304,20 +305,16 @@ public:
 
     inline void Cleanup() {
         for (const auto& v : mValues) {
-            for (const auto* vv : v.second) {
-                delete vv;
-            }
+            delete v.second;
         }
         for (const auto& v : mValuesWithData) {
-            for (const auto* vv : v.second) {
-                delete vv;
-            }
+            delete v.second;
         }
         for (const auto& i : mInstructions) {
             delete i.second;
         }
-        for (const auto* b : mBasicBlocks) {
-            delete b;
+        for (const auto& b : mBasicBlocks) {
+            delete b.second;
         }
         for (const auto* f : mFunctions) {
             delete f;
@@ -344,25 +341,46 @@ public:
         mLoopAnalyzers.clear();
         mLivenessAnalyzers.clear();
         mRegisterAllocators.clear();
+
+        mValuesIDs = -1;
+        mValuesWithDataIDs = std::numeric_limits<ValueId>::max();
+        mInstructionsIDs = -1;
+        mBasicBlockIDs = -1;
     }
 
     void PrintIR(std::ostream& out);
     void PrintDebug(std::ostream& out);
 
 private:
-    static InstructionId GenerateNewInstructionId() {
-        static InstructionId id = -1;
-        return ++id;
+    ValueId GenerateNewValueId() {
+        return ++mValuesIDs;
     }
 
-    std::vector<BasicBlock*> mBasicBlocks{};
-    std::vector<Function*> mFunctions{};
+    ValueId GenerateNewValueWithDataId() {
+        return --mValuesWithDataIDs;
+    }
 
-    std::unordered_map<InstructionId, Instruction*> mInstructions{};
+    InstructionId GenerateNewInstructionId() {
+        return ++mInstructionsIDs;
+    }
+
+    BasicBlockId GenerateNewBasicBlockId() {
+        return ++mBasicBlockIDs;
+    }
+
+    ValueId mValuesIDs = -1;
+    ValueId mValuesWithDataIDs = std::numeric_limits<ValueId>::max();
+    InstructionId mInstructionsIDs = -1;
+    BasicBlockId mBasicBlockIDs = -1;
 
     // Deliberately differentiate between Values with no data and Values with data
-    std::unordered_map<Function*, std::vector<Value*>> mValues{};
-    std::unordered_map<Function*, std::vector<Value*>> mValuesWithData{};
+    std::unordered_map<ValueId, Value*> mValues{};
+    std::unordered_map<ValueId, Value*> mValuesWithData{};
+    std::unordered_map<InstructionId, Instruction*> mInstructions{};
+    std::unordered_map<BasicBlockId, BasicBlock*> mBasicBlocks{};
+
+    std::vector<Function*> mFunctions{};
+
     std::unordered_map<Function*, ControlFlowGraph*> mGraphs{};
     std::unordered_map<ControlFlowGraph*, LoopAnalyzer*> mLoopAnalyzers{};
     std::unordered_map<ControlFlowGraph*, LivenessAnalyzer*> mLivenessAnalyzers{};

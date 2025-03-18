@@ -27,6 +27,8 @@ public:
     inline BasicBlock* GetEntryBasicBlock() const { return mEntry; }
 
     inline size_t Size() const { return mBasicBlocks.size(); }
+    size_t GetInstructionCount() const;
+    size_t GetReturnCount() const;
 
     // Setters
     inline void SetName(const std::string& name) { mName = name; }

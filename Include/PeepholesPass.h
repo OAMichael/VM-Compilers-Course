@@ -45,7 +45,7 @@ private:
         if (shiftAmount < bitSize) {
             T one = static_cast<T>(1);
             T andConstant = static_cast<T>(~((one << shiftAmount) - one));
-            Value* andConstantValue = IrBuilder->GetOrCreateValueWithData<T>(bb->GetParentFunction(), andConstant);
+            Value* andConstantValue = IrBuilder->GetOrCreateValueWithData<T>(andConstant);
 
             InstructionAnd* instAnd = IrBuilder->CreateAnd();
             instAnd->SetInput1(rShiftInput1);
@@ -65,7 +65,7 @@ private:
             IrBuilder->RemoveInstruction(lShift);
         }
         else {
-            Value* zero = IrBuilder->GetOrCreateValueWithData<T>(bb->GetParentFunction(), 0);
+            Value* zero = IrBuilder->GetOrCreateValueWithData<T>(0);
 
             InstructionMv* instMv = IrBuilder->CreateMv();
             instMv->SetInput(zero);

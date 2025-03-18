@@ -43,12 +43,12 @@ BasicBlock* IRBuilder::CreateBasicBlock(const std::string& name) {
 }
 
 BasicBlock* IRBuilder::CreateBasicBlock(Function* parentFunction, const std::string& name) {
-    BasicBlockId id = mBasicBlocks.size();
-    BasicBlock* bb = new BasicBlock(parentFunction, id, name);
+    BasicBlockId id = GenerateNewBasicBlockId();
+    BasicBlock* bb = new BasicBlock(id, parentFunction, name);
     if (parentFunction != nullptr) {
         parentFunction->AppendBasicBlock(bb);
     }
-    mBasicBlocks.push_back(bb);
+    mBasicBlocks.emplace(id, bb);
     return bb;
 }
 
@@ -901,11 +901,27 @@ void IRBuilder::PrintIR(std::ostream& out) {
 }
 
 void IRBuilder::PrintDebug(std::ostream& out) {
+    out << "Constants:\n";
+    for (const auto& pair : mValuesWithData) {
+        auto* v = pair.second;
+        out << "    " << v->GetValueStr() << "\n";
+    }
+    out << "\n\n";
+
     for (auto* f : mFunctions) {
+        const auto& args = f->GetArgs();
+
         out << "Function: " << f->GetName() << "\n";
 
+        out << "    Args: [ ";
+        for (auto* arg : args) {
+            out << arg->GetValueStr() << " ";
+        }
+        out << "]\n\n";
+
         out << "    Predecessors:\n";
-        for (const auto* bb : mBasicBlocks) {
+        for (const auto& pair : mBasicBlocks) {
+            auto* bb = pair.second;
             if (bb->GetParentFunction() != f) {
                 continue;
             }
@@ -917,7 +933,8 @@ void IRBuilder::PrintDebug(std::ostream& out) {
         out << "\n";
 
         out << "    Successors:\n";
-        for (const auto* bb : mBasicBlocks) {
+        for (const auto& pair : mBasicBlocks) {
+            auto* bb = pair.second;
             if (bb->GetParentFunction() != f) {
                 continue;
             }
@@ -929,46 +946,45 @@ void IRBuilder::PrintDebug(std::ostream& out) {
         out << "\n";
 
         out << "    Users:\n";
-        if (auto it = mValuesWithData.find(f); it != mValuesWithData.cend()) {
-            const auto& values = it->second;
-            for (const auto* v : values) {
-                for (const auto* i : v->GetUsers()) {
-                    out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+        for (const auto& pair : mValuesWithData) {
+            auto* v = pair.second;
+            for (auto* u : v->GetUsers()) {
+                BasicBlock* bb = u->GetParentBasicBlock();
+                if (!bb || bb->GetParentFunction() != f) {
+                    continue;
                 }
+                out << "        " << v->GetValueStr() << " -> [" << u->GetAsString() << "]\n";
             }
+
         }
-        if (auto it = mValues.find(f); it != mValues.cend()) {
-            const auto& values = it->second;
-            for (const auto* v : values) {
-                for (const auto* i : v->GetUsers()) {
-                    out << "        " << v->GetValueStr() << " -> [" << i->GetAsString() << "]\n";
+        for (const auto& pair : mValues) {
+            auto* v = pair.second;
+            for (auto* u : v->GetUsers()) {
+                BasicBlock* bb = u->GetParentBasicBlock();
+                if (!bb || bb->GetParentFunction() != f) {
+                    continue;
                 }
+                out << "        " << v->GetValueStr() << " -> [" << u->GetAsString() << "]\n";
             }
+
         }
         out << "\n";
 
         out << "    Producers:\n";
-        if (auto it = mValuesWithData.find(f); it != mValuesWithData.cend()) {
-            const auto& values = it->second;
-            for (const auto* v : values) {
-                Instruction* prod = v->GetProducer();
-                if (prod != nullptr) {
-                    out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
-                }
-                else {
-                    out << "        " << v->GetValueStr() << " -> null\n";
-                }
+        for (const auto& pair : mValues) {
+            auto* v = pair.second;
+            if (auto it = std::find(args.begin(), args.end(), v); it != args.end()) {
+                size_t argNo = std::distance(args.begin(), it);
+                out << "        " << v->GetValueStr() << " -> [Arg#" << argNo << "]\n";
             }
-        }
-        if (auto it = mValues.find(f); it != mValues.cend()) {
-            const auto& values = it->second;
-            for (const auto* v : values) {
+            else {
                 Instruction* prod = v->GetProducer();
                 if (prod != nullptr) {
+                    BasicBlock* bb = prod->GetParentBasicBlock();
+                    if (!bb || bb->GetParentFunction() != f) {
+                        continue;
+                    }
                     out << "        " << v->GetValueStr() << " -> [" << prod->GetAsString() << "]\n";
-                }
-                else {
-                    out << "        " << v->GetValueStr() << " -> null\n";
                 }
             }
         }
@@ -1027,11 +1043,22 @@ void IRBuilder::PrintDebug(std::ostream& out) {
         out << "\n";
 
         out << "        Live intervals:\n";
-        if (auto it = mValues.find(f); it != mValues.cend()) {
-            const auto& values = it->second;
-            for (const auto* v : values) {
-                out << "            " << v->GetValueStr() << ": [" << v->GetLiveInterval().start << ", " << v->GetLiveInterval().end << ")\n";
+        for (const auto& pair : mValues) {
+            auto* v = pair.second;
+            auto it = std::find(args.begin(), args.end(), v);
+            if (it == args.end()) {
+                Instruction* prod = v->GetProducer();
+                if (!prod) {
+                    continue;
+                }
+
+                BasicBlock* bb = prod->GetParentBasicBlock();
+                if (!bb || bb->GetParentFunction() != f) {
+                    continue;
+                }
             }
+
+            out << "            " << v->GetValueStr() << ": [" << v->GetLiveInterval().start << ", " << v->GetLiveInterval().end << ")\n";
         }
         out << "\n";
 
@@ -1039,10 +1066,17 @@ void IRBuilder::PrintDebug(std::ostream& out) {
             RegisterAllocator* registerAllocator = it->second;
 
             out << "    Register Allocation (GPR = " << registerAllocator->GetGPRegisterCount() << ", FPR = " << registerAllocator->GetFPRegisterCount() << "):\n";
-            for (const auto* v : mValues.at(f)) {
+            for (const auto& pair : mValues) {
+                auto* v = pair.second;
+
                 // TODO: function argument values. Should I account for function argument values? Or their locations are assured by calling convention?
-                const auto& fArgs = f->GetArgs();
-                if (std::count(fArgs.begin(), fArgs.end(), v)) {
+                Instruction* prod = v->GetProducer();
+                if (!prod) {
+                    continue;
+                }
+
+                BasicBlock* bb = prod->GetParentBasicBlock();
+                if (!bb || bb->GetParentFunction() != f) {
                     continue;
                 }
 

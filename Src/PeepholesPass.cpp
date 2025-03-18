@@ -94,35 +94,35 @@ bool PeepholesPass::PerformSingleAddPeephole(InstructionAdd* inst) const {
         switch (input1->GetValueType()) {
             default: break;
             case ValueType::Int8: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<int8_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<int8_t>(1);
                 break;
             }
             case ValueType::Int16: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<int16_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<int16_t>(1);
                 break;
             }
             case ValueType::Int32: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<int32_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<int32_t>(1);
                 break;
             }
             case ValueType::Int64: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<int64_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<int64_t>(1);
                 break;
             }
             case ValueType::Uint8: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<uint8_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<uint8_t>(1);
                 break;
             }
             case ValueType::Uint16: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<uint16_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<uint16_t>(1);
                 break;
             }
             case ValueType::Uint32: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<uint32_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<uint32_t>(1);
                 break;
             }
             case ValueType::Uint64: {
-                shift1 = IrBuilder->GetOrCreateValueWithData<uint64_t>(bb->GetParentFunction(), 1);
+                shift1 = IrBuilder->GetOrCreateValueWithData<uint64_t>(1);
                 break;
             }
         }
