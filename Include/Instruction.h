@@ -489,6 +489,7 @@ public:
     inline Function* GetFunction() { return mFunction; }
     inline Value* GetReturnValue() { return mOutput; }
     inline const std::vector<Value*>& GetArguments() const { return mInputs; }
+    inline Value* GetArgument(size_t idx) const { return mInputs[idx]; }
 
     // Setters
     inline void SetFunction(Function* function) { mFunction = function; }

@@ -135,7 +135,7 @@ bool InstructionCall::IsValid() const {
         return false;
     }
 
-    if (mFunction->GetReturnType().has_value() != (mOutput != nullptr)) {
+    if ((mFunction->GetReturnType() != ValueType::Void) != (mOutput != nullptr)) {
         return false;
     }
 

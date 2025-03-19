@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <limits>
+#include <list>
 
 #include <Instruction.h>
 #include <BasicBlock.h>
@@ -210,6 +211,12 @@ public:
     InstructionMv* CreateMv(BasicBlock* parentBasicBlock, Value* input, Value* output);
 
 
+    Value* CopyValue(Value* src);
+    Instruction* CopyInstruction(Instruction* src);
+    BasicBlock* CopyBasicBlock(BasicBlock* src);
+    Function* CopyFunction(Function* src);
+
+
     void RemoveValue(Value* value) {
         if (!value) {
             return;
@@ -220,8 +227,14 @@ public:
             return;
         }
 
-        mValues.erase(id);
-        mValuesWithData.erase(id);
+        if (mValues.contains(id)) {
+            delete mValues[id];
+            mValues.erase(id);
+        }
+        if (mValuesWithData.contains(id)) {
+            delete mValuesWithData[id];
+            mValuesWithData.erase(id);
+        }
     }
 
     void RemoveInstruction(Instruction* inst) {
@@ -234,7 +247,10 @@ public:
             return;
         }
 
-        mInstructions.erase(id);
+        if (mInstructions.contains(id)) {
+            delete mInstructions[id];
+            mInstructions.erase(id);
+        }
     }
 
     void RemoveBasicBlock(BasicBlock* bb) {
@@ -247,7 +263,44 @@ public:
             return;
         }
 
-        mBasicBlocks.erase(id);
+        if (mBasicBlocks.contains(id)) {
+            delete mBasicBlocks[id];
+            mBasicBlocks.erase(id);
+        }
+    }
+
+    void RemoveFunction(Function* func) {
+        if (!func) {
+            return;
+        }
+
+        auto it = std::find(mFunctions.begin(), mFunctions.end(), func);
+        if (it == mFunctions.end()) {
+            return;
+        }
+
+        delete *it;
+        mFunctions.erase(it);
+
+        if (mGraphs.contains(func)) {
+            ControlFlowGraph* cfg = mGraphs[func];
+
+            delete cfg;
+            mGraphs.erase(func);
+
+            if (mLoopAnalyzers.contains(cfg)) {
+                delete mLoopAnalyzers[cfg];
+                mLoopAnalyzers.erase(cfg);
+            }
+            if (mLivenessAnalyzers.contains(cfg)) {
+                delete mLivenessAnalyzers[cfg];
+                mLivenessAnalyzers.erase(cfg);
+            }
+            if (mRegisterAllocators.contains(cfg)) {
+                delete mRegisterAllocators[cfg];
+                mRegisterAllocators.erase(cfg);
+            }
+        }
     }
 
 
@@ -379,7 +432,7 @@ private:
     std::unordered_map<InstructionId, Instruction*> mInstructions{};
     std::unordered_map<BasicBlockId, BasicBlock*> mBasicBlocks{};
 
-    std::vector<Function*> mFunctions{};
+    std::list<Function*> mFunctions{};
 
     std::unordered_map<Function*, ControlFlowGraph*> mGraphs{};
     std::unordered_map<ControlFlowGraph*, LoopAnalyzer*> mLoopAnalyzers{};

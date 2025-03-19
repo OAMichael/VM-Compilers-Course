@@ -9,7 +9,7 @@ class Pass {
 public:
     Pass(const std::string& name) : mName{name} {}
 
-    virtual void Run(Function* func) const = 0;
+    virtual void Run(Function* func) = 0;
 
     inline const std::string& GetName() const { return mName; }
 

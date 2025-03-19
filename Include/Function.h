@@ -17,7 +17,7 @@ public:
     // Getters
     inline std::string GetName() const { return mName; }
 
-    inline std::optional<ValueType> GetReturnType() const { return mRetType; }
+    inline ValueType GetReturnType() const { return mRetType; }
     inline const std::vector<Value*>& GetArgs() const { return mArgs; }
     inline const Value* GetArg(const size_t idx) const { return mArgs[idx]; }
     inline Value* GetArg(const size_t idx) { return mArgs[idx]; }
@@ -34,7 +34,12 @@ public:
     inline void SetName(const std::string& name) { mName = name; }
     inline void SetEntryBasicBlock(BasicBlock* basicBlock) { mEntry = basicBlock; }
 
-    inline void AppendBasicBlock(BasicBlock* basicBlock) { mBasicBlocks.push_back(basicBlock); }
+    inline void AppendBasicBlock(BasicBlock* basicBlock) {
+        if (basicBlock) {
+            mBasicBlocks.push_back(basicBlock);
+            basicBlock->SetParentFunction(this);
+        }
+    }
 
     inline void Print(std::ostream& out) const {
         out << "function " << ValueTypeToIdStr(mRetType) << " ";
