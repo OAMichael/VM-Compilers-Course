@@ -25,7 +25,7 @@ PeepholesPass::PeepholesPass() : Pass(PEEPHOLES_PASS_NAME) {}
         
         [ v2 = And ui64 v1, v1 ]    -->     [ v2 = Mv ui64 v1 ]
 */
-void PeepholesPass::Run(Function* func) const {
+void PeepholesPass::Run(Function* func) {
     for (auto* bb : func->GetBasicBlocks()) {
         Instruction* inst = bb->Front();
         while (inst) {

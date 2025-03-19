@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 
 #include <Value.h>
 
@@ -86,6 +87,7 @@ public:
     virtual bool IsValid() const = 0;
     virtual bool IsTerminator() const { return false; }
     virtual Value* GetOutput() const { return nullptr; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const { (void)inputs; }
 
     bool IsArithmetic() const { return mType == InstructionType::Add
                                     || mType == InstructionType::Sub
@@ -157,6 +159,7 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual Value* GetOutput() const override { return mOutput; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetInput1() { return mInput1; }
@@ -308,6 +311,7 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual Value* GetOutput() const override { return mOutput; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetLoadPtr() { return mLoadPtr; }
@@ -332,6 +336,7 @@ public:
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetStorePtr() { return mStorePtr; }
@@ -387,6 +392,7 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual bool IsTerminator() const override { return true; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetInput1() { return mInput1; }
@@ -484,11 +490,13 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual Value* GetOutput() const override { return mOutput; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Function* GetFunction() { return mFunction; }
     inline Value* GetReturnValue() { return mOutput; }
     inline const std::vector<Value*>& GetArguments() const { return mInputs; }
+    inline Value* GetArgument(size_t idx) const { return mInputs[idx]; }
 
     // Setters
     inline void SetFunction(Function* function) { mFunction = function; }
@@ -516,6 +524,7 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual bool IsTerminator() const override { return true; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetReturnValue() { return mReturnValue; }
@@ -563,26 +572,27 @@ class InstructionPhi final : public Instruction {
 public:
     // Constructors
     InstructionPhi(const InstructionId id) : Instruction(InstructionType::Phi, id) {};
-    InstructionPhi(const InstructionId id, const std::set<Value*>& inputs, Value* output)
+    InstructionPhi(const InstructionId id, const std::list<Value*>& inputs, Value* output)
     : Instruction(InstructionType::Phi, id), mInputs{inputs}, mOutput{output} {};
 
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual Value* GetOutput() const override { return mOutput; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
-    inline const std::set<Value*>& GetInputs() const { return mInputs; }
+    inline const std::list<Value*>& GetInputs() const { return mInputs; }
 
     // Setters
-    inline void SetInputs(const std::set<Value*>& inputs) { mInputs = inputs; }
-    inline void AddInput(Value* input)       { mInputs.insert(input); }
-    inline bool HasInput(Value* input) const { return mInputs.contains(input); }
-    inline void RemoveInput(Value* input)    { mInputs.erase(input); }
+    inline void SetInputs(const std::list<Value*>& inputs) { mInputs = inputs; }
+    inline void AddInput(Value* input)       { mInputs.push_back(input); }
+    inline bool HasInput(Value* input) const { return std::find(mInputs.begin(), mInputs.end(), input) != mInputs.end(); }
+    inline void RemoveInput(Value* input)    { mInputs.remove(input); }
 
     inline void SetOutput(Value* value) { mOutput = value; }
 
 private:
-    std::set<Value*> mInputs{};
+    std::list<Value*> mInputs{};
     Value* mOutput;
 };
 
@@ -600,6 +610,7 @@ public:
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
     virtual Value* GetOutput() const override { return mOutput; }
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
 
     // Getters
     inline Value* GetInput() const { return mInput; }

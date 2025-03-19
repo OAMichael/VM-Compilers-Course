@@ -7,7 +7,7 @@ static const char CONSTANT_FOLDING_PASS_NAME[] = "Constant Folding Pass";
 
 ConstantFoldingPass::ConstantFoldingPass() : Pass(CONSTANT_FOLDING_PASS_NAME) {}
 
-void ConstantFoldingPass::Run(Function* func) const {
+void ConstantFoldingPass::Run(Function* func) {
     for (auto* bb : func->GetBasicBlocks()) {
         Instruction* inst = bb->Front();
         while (inst) {

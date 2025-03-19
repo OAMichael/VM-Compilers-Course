@@ -12,6 +12,7 @@ set(VMIR_UTILS_SOURCES
     RegisterAllocator.cpp
     PeepholesPass.cpp
     ConstantFoldingPass.cpp
+    StaticInliningPass.cpp
 )
 
 add_library(${VMIR_UTILS_NAME} STATIC ${VMIR_UTILS_SOURCES})

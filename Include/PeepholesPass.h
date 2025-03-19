@@ -10,7 +10,7 @@ class PeepholesPass : public Pass {
 public:
     PeepholesPass();
 
-    virtual void Run(Function* func) const override;
+    virtual void Run(Function* func) override;
 
 private:
     bool PerformSingleAddPeephole(InstructionAdd* inst) const;

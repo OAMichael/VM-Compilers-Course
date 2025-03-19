@@ -12,7 +12,7 @@ class ConstantFoldingPass : public Pass {
 public:
     ConstantFoldingPass();
 
-    virtual void Run(Function* func) const override;
+    virtual void Run(Function* func) override;
 
 private:
     // Combine optimization and get next instruction because current instruction can be erased due to optimizations

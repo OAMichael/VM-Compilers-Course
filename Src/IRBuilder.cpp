@@ -834,7 +834,7 @@ InstructionPhi* IRBuilder::CreatePhi() {
     return CreatePhi(nullptr, {}, nullptr);
 }
 
-InstructionPhi* IRBuilder::CreatePhi(const std::set<Value*>& inputs, Value* output) {
+InstructionPhi* IRBuilder::CreatePhi(const std::list<Value*>& inputs, Value* output) {
     return CreatePhi(nullptr, inputs, output);
 }
 
@@ -842,7 +842,7 @@ InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock) {
     return CreatePhi(parentBasicBlock, {}, nullptr);
 }
 
-InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const std::set<Value*>& inputs, Value* output) {
+InstructionPhi* IRBuilder::CreatePhi(BasicBlock* parentBasicBlock, const std::list<Value*>& inputs, Value* output) {
     InstructionId id = GenerateNewInstructionId();
     InstructionPhi* inst = new InstructionPhi(id, inputs, output);
     if (parentBasicBlock != nullptr) {
@@ -890,6 +890,504 @@ InstructionMv* IRBuilder::CreateMv(BasicBlock* parentBasicBlock, Value* input, V
 
 IRBuilder::~IRBuilder() {
     Cleanup();
+}
+
+
+Value* IRBuilder::CopyValue(Value* src) {
+    if (!src) {
+        return nullptr;
+    }
+
+    // Use the same constant value for every function
+    if (src->HasValue()) {
+        return src;
+    }
+
+    return CreateValue(src->GetValueType());
+}
+
+
+Instruction* IRBuilder::CopyInstruction(Instruction* src) {
+    if (!src) {
+        return nullptr;
+    }
+
+    switch (src->GetType()) {
+        default:
+        case InstructionType::Unknown:  return nullptr;
+        case InstructionType::Add:      return CreateAdd();
+        case InstructionType::Sub:      return CreateSub();
+        case InstructionType::Mul:      return CreateMul();
+        case InstructionType::Div:      return CreateDiv();
+        case InstructionType::Rem:      return CreateRem();
+        case InstructionType::And:      return CreateAnd();
+        case InstructionType::Or:       return CreateOr();
+        case InstructionType::Xor:      return CreateXor();
+        case InstructionType::Shl:      return CreateShl();
+        case InstructionType::Shr:      return CreateShr();
+        case InstructionType::Ashr:     return CreateAshr();
+        case InstructionType::Load:     return CreateLoad();
+        case InstructionType::Store:    return CreateStore();
+        case InstructionType::Jump:     return CreateJump();
+        case InstructionType::Beq:      return CreateBeq();
+        case InstructionType::Bne:      return CreateBne();
+        case InstructionType::Bgt:      return CreateBgt();
+        case InstructionType::Blt:      return CreateBlt();
+        case InstructionType::Bge:      return CreateBge();
+        case InstructionType::Ble:      return CreateBle();
+        case InstructionType::Call:     return CreateCall();
+        case InstructionType::Ret:      return CreateRet();
+        case InstructionType::Alloc:    return CreateAlloc();
+        case InstructionType::Phi:      return CreatePhi();
+        case InstructionType::Mv:       return CreateMv();
+    }
+}
+
+
+BasicBlock* IRBuilder::CopyBasicBlock(BasicBlock* src) {
+    if (!src) {
+        return nullptr;
+    }
+
+    std::string name = "<" + src->GetName() + "_COPY>";
+    return CreateBasicBlock(src->GetName());
+}
+
+
+Function* IRBuilder::CopyFunction(Function* src) {
+    if (!src) {
+        return nullptr;
+    }
+
+    std::unordered_map<Value*, Value*> valuesMap{};
+    std::unordered_map<Instruction*, Instruction*> instructionMap{};
+    std::unordered_map<BasicBlock*, BasicBlock*> basicBlocksMap{};
+
+    const auto& srcArgs = src->GetArgs();
+
+    ValueType retType = src->GetReturnType();
+    std::vector<ValueType> argsTypes{};
+    for (auto* arg : srcArgs) {
+        argsTypes.push_back(arg->GetValueType());
+    }
+    std::string name = "<" + src->GetName() + "_COPY>";
+
+    Function* dst = CreateFunction(retType, argsTypes, name);
+
+    const auto& dstArgs = dst->GetArgs();
+    for (size_t i = 0; i < srcArgs.size(); ++i) {
+        valuesMap.emplace(srcArgs[i], dstArgs[i]);
+    }
+
+    for (BasicBlock* srcBB : src->GetBasicBlocks()) {
+        BasicBlock* dstBB = CopyBasicBlock(srcBB);
+        basicBlocksMap.emplace(srcBB, dstBB);
+
+        Instruction* srcInst = srcBB->Front();
+        while (srcInst) {
+            Instruction* dstInst = CopyInstruction(srcInst);
+            instructionMap.emplace(srcInst, dstInst);
+
+            dstBB->AppendInstruction(dstInst);
+            srcInst = srcInst->GetNext();
+        }
+
+        dst->AppendBasicBlock(dstBB);
+    }
+
+    dst->SetEntryBasicBlock(basicBlocksMap[src->GetEntryBasicBlock()]);
+
+
+    auto GetOrCopyValue = [&valuesMap, this](Value* src) {
+        // Use the same constant value for every function
+        if (src->HasValue()) {
+            return src;
+        }
+
+        if (!valuesMap.contains(src)) {
+            Value* dst = CopyValue(src);
+            valuesMap.emplace(src, dst);
+        }
+        return valuesMap[src];
+    };
+
+
+    for (BasicBlock* srcBB : src->GetBasicBlocks()) {
+        BasicBlock* dstBB = basicBlocksMap[srcBB];
+
+        if (srcBB->GetTrueSuccessor() != nullptr) {
+            dstBB->SetTrueSuccessor(basicBlocksMap[srcBB->GetTrueSuccessor()]);
+        }
+        if (srcBB->GetFalseSuccessor() != nullptr) {
+            dstBB->SetFalseSuccessor(basicBlocksMap[srcBB->GetFalseSuccessor()]);
+        }
+
+        for (auto* srcPred : srcBB->GetPredecessors()) {
+            dstBB->AddPredecessor(basicBlocksMap[srcPred]);
+        }
+
+        Instruction* srcInst = srcBB->Front();
+        while (srcInst) {
+            Instruction* dstInst = instructionMap[srcInst];
+
+            if (srcInst->IsArithmetic()) {
+                InstructionArithmetic* srcArith = static_cast<InstructionArithmetic*>(srcInst);
+                InstructionArithmetic* dstArith = static_cast<InstructionArithmetic*>(dstInst);
+
+                Value* srcInput1 = srcArith->GetInput1();
+                Value* srcInput2 = srcArith->GetInput2();
+                Value* srcOutput = srcArith->GetOutput();
+
+                Value* dstInput1 = GetOrCopyValue(srcInput1);
+                Value* dstInput2 = GetOrCopyValue(srcInput2);
+                Value* dstOutput = GetOrCopyValue(srcOutput);
+
+                dstArith->SetInput1(dstInput1);
+                dstArith->SetInput2(dstInput2);
+                dstArith->SetOutput(dstOutput);
+
+                dstInput1->AddUser(dstArith);
+                dstInput2->AddUser(dstArith);
+                dstOutput->SetProducer(dstArith);
+            }
+            else if (srcInst->GetType() == InstructionType::Load) {
+                InstructionLoad* srcLoad = static_cast<InstructionLoad*>(srcInst);
+                InstructionLoad* dstLoad = static_cast<InstructionLoad*>(dstInst);
+
+                Value* srcLoadPtr = srcLoad->GetLoadPtr();
+                Value* srcOutput  = srcLoad->GetOutput();
+
+                Value* dstLoadPtr = GetOrCopyValue(srcLoadPtr);
+                Value* dstOutput  = GetOrCopyValue(srcOutput);
+
+                dstLoad->SetLoadPtr(dstLoadPtr);
+                dstLoad->SetOutput(dstOutput);
+
+                dstLoadPtr->AddUser(dstLoad);
+                dstOutput->SetProducer(dstLoad);
+            }
+            else if (srcInst->GetType() == InstructionType::Store) {
+                InstructionStore* srcStore = static_cast<InstructionStore*>(srcInst);
+                InstructionStore* dstStore = static_cast<InstructionStore*>(dstInst);
+
+                Value* srcStorePtr = srcStore->GetStorePtr();
+                Value* srcInput    = srcStore->GetInput();
+
+                Value* dstStorePtr = GetOrCopyValue(srcStorePtr);
+                Value* dstInput    = GetOrCopyValue(srcInput);
+
+                dstStore->SetStorePtr(dstStorePtr);
+                dstStore->SetInput(dstInput);
+
+                dstStorePtr->AddUser(dstStore);
+                dstInput->AddUser(dstStore);
+            }
+            else if (srcInst->GetType() == InstructionType::Jump) {
+                InstructionJump* srcJump = static_cast<InstructionJump*>(srcInst);
+                InstructionJump* dstJump = static_cast<InstructionJump*>(dstInst);
+
+                BasicBlock* srcJumpBasicBlock = srcJump->GetJumpBasicBlock();
+                BasicBlock* dstJumpBasicBlock = basicBlocksMap[srcJumpBasicBlock];
+
+                dstJump->SetJumpBasicBlock(dstJumpBasicBlock);
+            }
+            else if (srcInst->IsBranch()) {
+                InstructionBranch* srcBranch = static_cast<InstructionBranch*>(srcInst);
+                InstructionBranch* dstBranch = static_cast<InstructionBranch*>(dstInst);
+
+                Value* srcInput1 = srcBranch->GetInput1();
+                Value* srcInput2 = srcBranch->GetInput2();
+
+                Value* dstInput1 = GetOrCopyValue(srcInput1);
+                Value* dstInput2 = GetOrCopyValue(srcInput2);
+
+                dstBranch->SetInput1(dstInput1);
+                dstBranch->SetInput2(dstInput2);
+
+                dstInput1->AddUser(dstBranch);
+                dstInput2->AddUser(dstBranch);
+
+
+                BasicBlock* srcTrueBasicBlock  = srcBranch->GetTrueBasicBlock();
+                BasicBlock* srcFalseBasicBlock = srcBranch->GetFalseBasicBlock();
+
+                BasicBlock* dstTrueBasicBlock  = basicBlocksMap[srcTrueBasicBlock];
+                BasicBlock* dstFalseBasicBlock = basicBlocksMap[srcFalseBasicBlock];
+
+                dstBranch->SetTrueBasicBlock(dstTrueBasicBlock);
+                dstBranch->SetFalseBasicBlock(dstFalseBasicBlock);
+            }
+            else if (srcInst->GetType() == InstructionType::Call) {
+                InstructionCall* srcCall = static_cast<InstructionCall*>(srcInst);
+                InstructionCall* dstCall = static_cast<InstructionCall*>(dstInst);
+
+                dstCall->SetFunction(srcCall->GetFunction());
+
+                Value* srcReturnValue = srcCall->GetReturnValue();
+                if (srcReturnValue) {
+                    Value* dstReturnValue = GetOrCopyValue(srcReturnValue);
+
+                    dstCall->SetReturnValue(dstReturnValue);
+                    dstReturnValue->SetProducer(dstCall);
+                }
+
+                const auto& srcArgs = srcCall->GetArguments();
+                for (size_t i = 0; i < srcArgs.size(); ++i) {
+                    Value* srcArg = srcArgs[i];
+                    Value* dstArg = GetOrCopyValue(srcArg);
+
+                    dstCall->SetArgument(i, dstArg);
+                    dstArg->AddUser(dstCall);
+                }
+            }
+            else if (srcInst->GetType() == InstructionType::Ret) {
+                InstructionRet* srcRet = static_cast<InstructionRet*>(srcInst);
+                InstructionRet* dstRet = static_cast<InstructionRet*>(dstInst);
+
+                Value* srcReturnValue = srcRet->GetReturnValue();
+                if (srcReturnValue) {
+                    Value* dstReturnValue = GetOrCopyValue(srcReturnValue);
+                    dstRet->SetReturnValue(dstReturnValue);
+                    dstReturnValue->AddUser(dstRet);
+                }
+            }
+            else if (srcInst->GetType() == InstructionType::Phi) {
+                InstructionPhi* srcPhi = static_cast<InstructionPhi*>(srcInst);
+                InstructionPhi* dstPhi = static_cast<InstructionPhi*>(dstInst);
+
+                Value* srcOutput = srcPhi->GetOutput();
+                Value* dstOutput = GetOrCopyValue(srcOutput);
+
+                dstPhi->SetOutput(dstOutput);
+                dstOutput->SetProducer(dstPhi);
+
+                for (Value* srcInput : srcPhi->GetInputs()) {
+                    Value* dstInput = GetOrCopyValue(srcInput);
+
+                    dstPhi->AddInput(dstInput);
+                    dstInput->AddUser(dstPhi);
+                }
+            }
+            else if (srcInst->GetType() == InstructionType::Mv) {
+                InstructionMv* srcMv = static_cast<InstructionMv*>(srcInst);
+                InstructionMv* dstMv = static_cast<InstructionMv*>(dstInst);
+
+                Value* srcInput  = srcMv->GetInput();
+                Value* srcOutput = srcMv->GetOutput();
+
+                Value* dstInput  = GetOrCopyValue(srcInput);
+                Value* dstOutput = GetOrCopyValue(srcOutput);
+
+                dstMv->SetInput(dstInput);
+                dstMv->SetOutput(dstOutput);
+
+                dstInput->AddUser(dstMv);
+                dstOutput->SetProducer(dstMv);
+            }
+
+            srcInst = srcInst->GetNext();
+        }
+    }
+
+    return dst;
+}
+
+
+bool IRBuilder::CompareFunctions(Function* lhs, Function* rhs) const {
+    if (!lhs || !rhs) {
+        return false;
+    }
+
+    // Check return type
+    if (lhs->GetReturnType() != rhs->GetReturnType()) {
+        return false;
+    }
+
+    std::unordered_map<Value*, Value*> valuesMap{};
+    std::unordered_map<Instruction*, Instruction*> instructionMap{};
+    std::unordered_map<BasicBlock*, BasicBlock*> basicBlocksMap{};
+
+    // Check parameters
+    const auto& lhsArgs = lhs->GetArgs();
+    const auto& rhsArgs = rhs->GetArgs();
+    if (lhsArgs.size() != rhsArgs.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < lhsArgs.size(); ++i) {
+        Value* lhsArg = lhsArgs[i];
+        Value* rhsArg = rhsArgs[i];
+
+        if (lhsArg->GetValueType() != rhsArg->GetValueType()) {
+            return false;
+        }
+
+        valuesMap.emplace(lhsArg, rhsArg);
+    }
+
+    // Check basic blocks count
+    const auto& lhsBBs = lhs->GetBasicBlocks();
+    const auto& rhsBBs = rhs->GetBasicBlocks();
+    if (lhsBBs.size() != rhsBBs.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < lhsBBs.size(); ++i) {
+        BasicBlock* lhsBB = lhsBBs[i];
+        BasicBlock* rhsBB = rhsBBs[i];
+
+        if (lhsBB->Size() != rhsBB->Size()) {
+            return false;
+        }
+
+        basicBlocksMap.emplace(lhsBB, rhsBB);
+    }
+
+    // Check entry basic blocks
+    BasicBlock* lhsEntry = lhs->GetEntryBasicBlock();
+    BasicBlock* rhsEntry = rhs->GetEntryBasicBlock();
+    if (!lhsEntry || !rhsEntry) {
+        return false;
+    }
+
+    if (basicBlocksMap[lhsEntry] != rhsEntry) {
+        return false;
+    }
+
+    // Check control flow and collect instructions and values
+    for (const auto& bbPair : basicBlocksMap) {
+        BasicBlock* lhsBB = bbPair.first;
+        BasicBlock* rhsBB = bbPair.second;
+
+        const auto& lhsBBTrueSucc = lhsBB->GetTrueSuccessor();
+        const auto& rhsBBTrueSucc = rhsBB->GetTrueSuccessor();
+        if ((lhsBBTrueSucc != nullptr) != (rhsBBTrueSucc != nullptr)) {
+            return false;
+        }
+        if (lhsBBTrueSucc && basicBlocksMap[lhsBBTrueSucc] != rhsBBTrueSucc) {
+            return false;
+        }
+
+        const auto& lhsBBFalseSucc = lhsBB->GetFalseSuccessor();
+        const auto& rhsBBFalseSucc = rhsBB->GetFalseSuccessor();
+        if ((lhsBBFalseSucc != nullptr) != (rhsBBFalseSucc != nullptr)) {
+            return false;
+        }
+        if (lhsBBFalseSucc && basicBlocksMap[lhsBBFalseSucc] != rhsBBFalseSucc) {
+            return false;
+        }
+
+        const auto& lhsBBPreds = lhsBB->GetPredecessors();
+        const auto& rhsBBPreds = rhsBB->GetPredecessors();
+        if (lhsBBPreds.size() != rhsBBPreds.size()) {
+            return false;
+        }
+
+        for (auto* lhsBBPred : lhsBBPreds) {
+            if (!rhsBBPreds.contains(basicBlocksMap[lhsBBPred])) {
+                return false;
+            }
+        }
+
+
+        Instruction* lhsInst = lhsBB->Front();
+        Instruction* rhsInst = rhsBB->Front();
+        while (lhsInst && rhsInst) {
+            if (lhsInst->GetType() != rhsInst->GetType()) {
+                return false;
+            }
+
+            Value* lhsOutput = lhsInst->GetOutput();
+            Value* rhsOutput = rhsInst->GetOutput();
+            if ((lhsOutput != nullptr) != (rhsOutput != nullptr)) {
+                return false;
+            }
+            if (lhsOutput) {
+                if (valuesMap.contains(lhsOutput)) {
+                    if (valuesMap[lhsOutput] != rhsOutput) {
+                        return false;
+                    }
+                }
+                else {
+                    valuesMap.emplace(lhsOutput, rhsOutput);
+                }
+            }
+
+            std::vector<Value*> lhsInputs{};
+            std::vector<Value*> rhsInputs{};
+            lhsInst->PopulateInputs(lhsInputs);
+            rhsInst->PopulateInputs(rhsInputs);
+
+            if (lhsInputs.size() != rhsInputs.size()) {
+                return false;
+            }
+
+            for (size_t i = 0; i < lhsInputs.size(); ++i) {
+                Value* lhsInput = lhsInputs[i];
+                Value* rhsInput = rhsInputs[i];
+                if (valuesMap.contains(lhsInput)) {
+                    if (valuesMap[lhsInput] != rhsInput) {
+                        return false;
+                    }
+                }
+                else {
+                    valuesMap.emplace(lhsInput, rhsInput);
+                }
+            }
+
+            instructionMap.emplace(lhsInst, rhsInst);
+
+            lhsInst = lhsInst->GetNext();
+            rhsInst = rhsInst->GetNext();
+        }
+    }
+
+
+    // Check data flow
+    for (const auto& valuesPair : valuesMap) {
+        Value* lhsValue = valuesPair.first;
+        Value* rhsValue = valuesPair.second;
+
+        if (lhsValue->GetValueType() != rhsValue->GetValueType()) {
+            return false;
+        }
+
+        if (lhsValue->HasValue() != rhsValue->HasValue()) {
+            return false;
+        }
+
+        if (lhsValue->HasValue() && lhsValue != rhsValue) {
+            return false;
+        }
+
+        Instruction* lhsProducer = lhsValue->GetProducer();
+        Instruction* rhsProducer = rhsValue->GetProducer();
+        if ((lhsProducer != nullptr) != (rhsProducer != nullptr)) {
+            return false;
+        }
+
+        if (lhsProducer && instructionMap[lhsProducer] != rhsProducer) {
+            return false;
+        }
+
+        const auto& lhsUsers = lhsValue->GetUsers();
+        const auto& rhsUsers = rhsValue->GetUsers();
+        if (lhsUsers.size() != rhsUsers.size()) {
+            return false;
+        }
+
+        for (auto* lhsUser : lhsUsers) {
+            BasicBlock* lhsUserBB = lhsUser->GetParentBasicBlock();
+            if (lhsUserBB->GetParentFunction() != lhs) {
+                continue;
+            }
+            if (!rhsUsers.contains(instructionMap[lhsUser])) {
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 

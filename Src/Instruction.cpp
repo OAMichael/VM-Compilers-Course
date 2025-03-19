@@ -31,6 +31,11 @@ bool InstructionArithmetic::IsValid() const {
         && mInput1->GetValueType() != ValueType::Unknown;
 }
 
+void InstructionArithmetic::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mInput1);
+    inputs.push_back(mInput2);
+}
+
 
 bool InstructionBitwise::IsValid() const {
     return InstructionArithmetic::IsValid()
@@ -54,6 +59,10 @@ bool InstructionLoad::IsValid() const {
         && mLoadPtr->GetValueType() == ValueType::Pointer;
 }
 
+void InstructionLoad::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mLoadPtr);
+}
+
 
 std::string InstructionStore::GetAsString() const {
     const std::string inName = mInput->GetValueStr();
@@ -67,6 +76,11 @@ bool InstructionStore::IsValid() const {
         && mStorePtr != nullptr && mInput != nullptr
         && mStorePtr->IsValid() && mInput->IsValid()
         && mStorePtr->GetValueType() == ValueType::Pointer;
+}
+
+void InstructionStore::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mStorePtr);
+    inputs.push_back(mInput);
 }
 
 
@@ -95,6 +109,11 @@ bool InstructionBranch::IsValid() const {
         && mInput1->IsValid() && mInput2->IsValid()
         && mInput1->GetValueType() == mInput2->GetValueType()
         && mTrueBB != nullptr && mFalseBB != nullptr;
+}
+
+void InstructionBranch::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mInput1);
+    inputs.push_back(mInput2);
 }
 
 
@@ -135,7 +154,7 @@ bool InstructionCall::IsValid() const {
         return false;
     }
 
-    if (mFunction->GetReturnType().has_value() != (mOutput != nullptr)) {
+    if ((mFunction->GetReturnType() != ValueType::Void) != (mOutput != nullptr)) {
         return false;
     }
 
@@ -157,6 +176,10 @@ bool InstructionCall::IsValid() const {
     }
 
     return true;
+}
+
+void InstructionCall::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs = mInputs;
 }
 
 
@@ -192,6 +215,12 @@ bool InstructionRet::IsValid() const {
     }
 
     return true;
+}
+
+void InstructionRet::PopulateInputs(std::vector<Value*>& inputs) const {
+    if (mReturnValue) {
+        inputs.push_back(mReturnValue);
+    }
 }
 
 
@@ -261,6 +290,12 @@ bool InstructionPhi::IsValid() const {
     return true;
 }
 
+void InstructionPhi::PopulateInputs(std::vector<Value*>& inputs) const {
+    for (auto* i : mInputs) {
+        inputs.push_back(i);
+    }
+}
+
 
 std::string InstructionMv::GetAsString() const {
     const std::string inName = mInput->GetValueStr();
@@ -276,6 +311,10 @@ bool InstructionMv::IsValid() const {
         && mInput->IsValid() && mOutput->IsValid()
         && mInput->GetValueType() == mOutput->GetValueType()
         && mInput->GetValueType() != ValueType::Unknown;
+}
+
+void InstructionMv::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mInput);
 }
 
 }   // namespace VMIR
