@@ -9,7 +9,7 @@ bool Instruction::IsDominatedBy(Instruction* inst) {
     if (mParentBasicBlock != instBB) {
         return mParentBasicBlock->IsDominatedBy(instBB);
     }
-    return mParentBasicBlock->IndexOfInstruction(inst) > mParentBasicBlock->IndexOfInstruction(this);
+    return mParentBasicBlock->IndexOfInstruction(inst) < mParentBasicBlock->IndexOfInstruction(this);
 }
 
 
@@ -23,12 +23,29 @@ std::string InstructionArithmetic::GetAsString() const {
 }
 
 bool InstructionArithmetic::IsValid() const {
+    auto IsValidSimple = [](Value* input1, Value* input2, Value* output) {
+        return input1->GetValueType() == input2->GetValueType()
+            && input1->GetValueType() == output->GetValueType();
+    };
+
+    auto IsValidPointer = [](Value* input1, Value* input2, Value* output, InstructionType type) {
+        if (type != InstructionType::Add && type != InstructionType::Sub) {
+            return false;
+        }
+        if (!output->IsPointer()) {
+            return false;
+        }
+        return (input1->IsPointer() && input2->IsIntegralValueType())
+            || (input1->IsIntegralValueType() && input2->IsPointer());
+    };
+
     return mId != -1 && mParentBasicBlock != nullptr
         && mInput1 != nullptr && mInput2 != nullptr && mOutput != nullptr
         && mInput1->IsValid() && mInput2->IsValid() && mOutput->IsValid()
-        && mInput1->GetValueType() == mInput2->GetValueType()
-        && mInput1->GetValueType() == mOutput->GetValueType()
-        && mInput1->GetValueType() != ValueType::Unknown;
+        && mInput1->GetValueType() != ValueType::Unknown
+        && mInput2->GetValueType() != ValueType::Unknown
+        && mOutput->GetValueType() != ValueType::Unknown
+        && (IsValidSimple(mInput1, mInput2, mOutput) || IsValidPointer(mInput1, mInput2, mOutput, mType));
 }
 
 void InstructionArithmetic::PopulateInputs(std::vector<Value*>& inputs) const {
@@ -228,8 +245,8 @@ std::string InstructionAlloc::GetAsString() const {
     std::string outStr = "";
 
     const std::string outName = mOutput->GetValueStr();
-    const std::string outTypeStr = ValueTypeToIdStr(mOutput->GetValueType());
-    outStr += outName + " = Alloc " + outTypeStr;
+    const std::string valueTypeStr = ValueTypeToIdStr(mValueType);
+    outStr += outName + " = Alloc " + valueTypeStr;
     
     if (mCount > 1) {
         outStr += ", " + std::to_string(mCount);
@@ -241,7 +258,8 @@ std::string InstructionAlloc::GetAsString() const {
 bool InstructionAlloc::IsValid() const {
     return mId != -1 && mParentBasicBlock != nullptr
         && mOutput != nullptr && mOutput->IsValid()
-        && mOutput->GetValueType() == ValueType::Pointer && mCount > 0;
+        && mOutput->GetValueType() == ValueType::Pointer
+        && mValueType != ValueType::Unknown && mCount > 0;
 }
 
 
@@ -315,6 +333,48 @@ bool InstructionMv::IsValid() const {
 
 void InstructionMv::PopulateInputs(std::vector<Value*>& inputs) const {
     inputs.push_back(mInput);
+}
+
+
+std::string InstructionNullCheck::GetAsString() const {
+    const std::string inName = mInput->GetValueStr();
+    const std::string inIdStr = ValueTypeToIdStr(mInput->GetValueType());
+    return "NullCheck " + inIdStr + " " + inName;
+}
+
+bool InstructionNullCheck::IsValid() const {
+    return mId != -1 && mParentBasicBlock != nullptr
+        && mInput != nullptr && mInput->IsValid()
+        && mInput->GetValueType() == ValueType::Pointer;
+}
+
+void InstructionNullCheck::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mInput);
+}
+
+
+std::string InstructionBoundsCheck::GetAsString() const {
+    const std::string ptrName = mInputPtr->GetValueStr();
+    const std::string arrayName = mInputArray->GetValueStr();
+    const std::string ptrIdStr = ValueTypeToIdStr(mInputPtr->GetValueType());
+    size_t arraySize = static_cast<InstructionAlloc*>(mInputArray->GetProducer())->GetCount();
+    return "BoundsCheck " + ptrIdStr + " " + ptrName + ", [ptr " + arrayName + ", " + std::to_string(arraySize) + "]";
+}
+
+bool InstructionBoundsCheck::IsValid() const {
+    return mId != -1 && mParentBasicBlock != nullptr
+        && mInputPtr != nullptr && mInputArray != nullptr
+        && mInputPtr->IsValid() && mInputArray->IsValid()
+        && mInputPtr->GetValueType() == ValueType::Pointer
+        && mInputArray->GetValueType() == ValueType::Pointer
+        && mInputArray->GetProducer() != nullptr
+        && mInputArray->GetProducer()->GetType() == InstructionType::Alloc
+        && mInputArray->GetProducer()->IsValid();
+}
+
+void InstructionBoundsCheck::PopulateInputs(std::vector<Value*>& inputs) const {
+    inputs.push_back(mInputPtr);
+    inputs.push_back(mInputArray);
 }
 
 }   // namespace VMIR

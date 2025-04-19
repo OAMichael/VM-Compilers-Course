@@ -38,6 +38,8 @@ enum class InstructionType {
     Alloc,
     Phi,
     Mv,
+    NullCheck,
+    BoundsCheck,
 
     Unknown
 };
@@ -46,32 +48,34 @@ enum class InstructionType {
 static inline const char *InstructionTypeToStr(const InstructionType it) {
     switch (it) {
         default:
-        case InstructionType::Unknown:  return "Unknown";
-        case InstructionType::Add:      return "Add";
-        case InstructionType::Sub:      return "Sub";
-        case InstructionType::Mul:      return "Mul";
-        case InstructionType::Div:      return "Div";
-        case InstructionType::Rem:      return "Rem";
-        case InstructionType::And:      return "And";
-        case InstructionType::Or:       return "Or";
-        case InstructionType::Xor:      return "Xor";
-        case InstructionType::Shl:      return "Shl";
-        case InstructionType::Shr:      return "Shr";
-        case InstructionType::Ashr:     return "Ashr";
-        case InstructionType::Load:     return "Load";
-        case InstructionType::Store:    return "Store";
-        case InstructionType::Jump:     return "Jump";
-        case InstructionType::Beq:      return "Beq";
-        case InstructionType::Bne:      return "Bne";
-        case InstructionType::Bgt:      return "Bgt";
-        case InstructionType::Blt:      return "Blt";
-        case InstructionType::Bge:      return "Bge";
-        case InstructionType::Ble:      return "Ble";
-        case InstructionType::Call:     return "Call";
-        case InstructionType::Ret:      return "Ret";
-        case InstructionType::Alloc:    return "Alloc";
-        case InstructionType::Phi:      return "Phi";
-        case InstructionType::Mv:       return "Mv";
+        case InstructionType::Unknown:      return "Unknown";
+        case InstructionType::Add:          return "Add";
+        case InstructionType::Sub:          return "Sub";
+        case InstructionType::Mul:          return "Mul";
+        case InstructionType::Div:          return "Div";
+        case InstructionType::Rem:          return "Rem";
+        case InstructionType::And:          return "And";
+        case InstructionType::Or:           return "Or";
+        case InstructionType::Xor:          return "Xor";
+        case InstructionType::Shl:          return "Shl";
+        case InstructionType::Shr:          return "Shr";
+        case InstructionType::Ashr:         return "Ashr";
+        case InstructionType::Load:         return "Load";
+        case InstructionType::Store:        return "Store";
+        case InstructionType::Jump:         return "Jump";
+        case InstructionType::Beq:          return "Beq";
+        case InstructionType::Bne:          return "Bne";
+        case InstructionType::Bgt:          return "Bgt";
+        case InstructionType::Blt:          return "Blt";
+        case InstructionType::Bge:          return "Bge";
+        case InstructionType::Ble:          return "Ble";
+        case InstructionType::Call:         return "Call";
+        case InstructionType::Ret:          return "Ret";
+        case InstructionType::Alloc:        return "Alloc";
+        case InstructionType::Phi:          return "Phi";
+        case InstructionType::Mv:           return "Mv";
+        case InstructionType::NullCheck:    return "NullCheck";
+        case InstructionType::BoundsCheck:  return "BoundsCheck";
     }
 }
 
@@ -544,9 +548,8 @@ class InstructionAlloc final : public Instruction {
 public:
     // Constructors
     InstructionAlloc(const InstructionId id) : Instruction(InstructionType::Alloc, id) {};
-    InstructionAlloc(const InstructionId id, Value* output) : Instruction(InstructionType::Alloc, id), mOutput{output} {};
-    InstructionAlloc(const InstructionId id, Value* output, const size_t count)
-    : Instruction(InstructionType::Alloc, id), mOutput{output}, mCount{count} {};
+    InstructionAlloc(const InstructionId id, Value* output, ValueType type, size_t count = 1)
+    : Instruction(InstructionType::Alloc, id), mOutput{output}, mValueType{type}, mCount{count} {};
     
     virtual std::string GetAsString() const override;
     virtual bool IsValid() const override;
@@ -554,14 +557,17 @@ public:
 
     // Getters
     inline size_t GetCount() const { return mCount; }
+    inline ValueType GetValueType() const { return mValueType; }
 
     // Setters
     inline void SetOutput(Value* output) { mOutput = output; }
-    inline void SetCount(const size_t count) { mCount = count; }
+    inline void SetCount(size_t count) { mCount = count; }
+    inline void SetValueType(ValueType type) { mValueType = type; }
 
 private:
     Value* mOutput;
-    size_t mCount{1};
+    ValueType mValueType;
+    size_t mCount;
 };
 
 
@@ -622,6 +628,55 @@ public:
 private:
     Value* mInput;
     Value* mOutput;
+};
+
+
+
+// Check instructions
+
+class InstructionNullCheck final : public Instruction {
+public:
+    // Constructors
+    InstructionNullCheck(const InstructionId id) : Instruction(InstructionType::NullCheck, id) {};
+    InstructionNullCheck(const InstructionId id, Value* input)
+    : Instruction(InstructionType::NullCheck, id), mInput{input} {};
+
+    virtual std::string GetAsString() const override;
+    virtual bool IsValid() const override;
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
+
+    // Getters
+    inline Value* GetInput() const { return mInput; }
+
+    // Setters
+    inline void SetInput(Value* input) { mInput = input; }
+
+private:
+    Value* mInput;
+};
+
+class InstructionBoundsCheck final : public Instruction {
+public:
+    // Constructors
+    InstructionBoundsCheck(const InstructionId id) : Instruction(InstructionType::BoundsCheck, id) {};
+    InstructionBoundsCheck(const InstructionId id, Value* inputPtr, Value* inputArray)
+    : Instruction(InstructionType::BoundsCheck, id), mInputPtr{inputPtr}, mInputArray{inputArray} {};
+
+    virtual std::string GetAsString() const override;
+    virtual bool IsValid() const override;
+    virtual void PopulateInputs(std::vector<Value*>& inputs) const override;
+
+    // Getters
+    inline Value* GetInputPtr() const { return mInputPtr; }
+    inline Value* GetInputArray() const { return mInputArray; }
+
+    // Setters
+    inline void SetInputPtr(Value* inputPtr) { mInputPtr = inputPtr; }
+    inline void SetInputArray(Value* inputArray) { mInputArray = inputArray; }
+
+private:
+    Value* mInputPtr;
+    Value* mInputArray;
 };
 
 }   // namespace VMIR

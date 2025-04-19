@@ -405,6 +405,26 @@ void LivenessAnalyzer::CalculateLiveRanges() {
                     input->GetLiveInterval().UniteWith(liveRangeBBToInst);
                     break;
                 }
+                case InstructionType::NullCheck: {
+                    InstructionNullCheck* instNullCheck = static_cast<InstructionNullCheck*>(bbInst);
+                    Value* input = instNullCheck->GetInput();
+                    liveset.insert(input);
+                    input->GetLiveInterval().UniteWith(liveRangeBBToInst);
+                    break;
+                }
+                case InstructionType::BoundsCheck: {
+                    InstructionBoundsCheck* instBoundsCheck = static_cast<InstructionBoundsCheck*>(bbInst);
+
+                    Value* inputPtr = instBoundsCheck->GetInputPtr();
+                    liveset.insert(inputPtr);
+                    inputPtr->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
+                    Value* inputArray = instBoundsCheck->GetInputArray();
+                    liveset.insert(inputArray);
+                    inputArray->GetLiveInterval().UniteWith(liveRangeBBToInst);
+
+                    break;
+                }
             }
 
             bbInst = bbInst->GetPrev();

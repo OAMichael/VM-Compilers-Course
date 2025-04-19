@@ -255,6 +255,27 @@ void ConstantFoldingPass::ReplaceMoveUserInputWithConstant(Instruction* user, In
         inputMv->AddUser(instMv);
         instMv->SetInput(inputMv);
     }
+    else if (user->GetType() == InstructionType::NullCheck) {
+        InstructionNullCheck* instNullCheck = static_cast<InstructionNullCheck*>(user);
+
+        outputMv->RemoveUser(instMv);
+        inputMv->AddUser(instNullCheck);
+        instNullCheck->SetInput(inputMv);
+    }
+    else if (user->GetType() == InstructionType::BoundsCheck) {
+        InstructionBoundsCheck* instBoundsCheck = static_cast<InstructionBoundsCheck*>(user);
+        Value* userInputPtr = instBoundsCheck->GetInputPtr();
+        Value* userInputArray = instBoundsCheck->GetInputArray();
+
+        outputMv->RemoveUser(instBoundsCheck);
+        inputMv->AddUser(instBoundsCheck);
+        if (userInputPtr == outputMv) {
+            instBoundsCheck->SetInputPtr(inputMv);
+        }
+        if (userInputArray == outputMv) {
+            instBoundsCheck->SetInputArray(inputMv);
+        }
+    }
 }
 
 

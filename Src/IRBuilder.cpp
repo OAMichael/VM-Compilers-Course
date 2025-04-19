@@ -797,28 +797,20 @@ InstructionRet* IRBuilder::CreateRet(BasicBlock* parentBasicBlock, Value* return
 
 
 InstructionAlloc* IRBuilder::CreateAlloc() {
-    return CreateAlloc(nullptr, nullptr, 1);
+    return CreateAlloc(nullptr, nullptr, ValueType::Unknown, 0);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(Value* output) {
-    return CreateAlloc(nullptr, output, 1);
-}
-
-InstructionAlloc* IRBuilder::CreateAlloc(Value* output, const size_t count) {
-    return CreateAlloc(nullptr, output, count);
+InstructionAlloc* IRBuilder::CreateAlloc(Value* output, ValueType type, size_t count) {
+    return CreateAlloc(nullptr, output, type, count);
 }
 
 InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock) {
-    return CreateAlloc(parentBasicBlock, nullptr, 1);
+    return CreateAlloc(parentBasicBlock, nullptr, ValueType::Unknown, 0);
 }
 
-InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output) {
-    return CreateAlloc(parentBasicBlock, output, 1);
-}
-
-InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output, const size_t count) {
+InstructionAlloc* IRBuilder::CreateAlloc(BasicBlock* parentBasicBlock, Value* output, ValueType type, size_t count) {
     InstructionId id = GenerateNewInstructionId();
-    InstructionAlloc* inst = new InstructionAlloc(id, output, count);
+    InstructionAlloc* inst = new InstructionAlloc(id, output, type, count);
     if (parentBasicBlock != nullptr) {
         parentBasicBlock->AppendInstruction(inst);
     }
@@ -888,6 +880,61 @@ InstructionMv* IRBuilder::CreateMv(BasicBlock* parentBasicBlock, Value* input, V
 }
 
 
+InstructionNullCheck* IRBuilder::CreateNullCheck() {
+    return CreateNullCheck(nullptr, nullptr);
+}
+
+InstructionNullCheck* IRBuilder::CreateNullCheck(Value* input) {
+    return CreateNullCheck(nullptr, input);
+}
+
+InstructionNullCheck* IRBuilder::CreateNullCheck(BasicBlock* parentBasicBlock) {
+    return CreateNullCheck(parentBasicBlock, nullptr);
+}
+
+InstructionNullCheck* IRBuilder::CreateNullCheck(BasicBlock* parentBasicBlock, Value* input) {
+    InstructionId id = GenerateNewInstructionId();
+    InstructionNullCheck* inst = new InstructionNullCheck(id, input);
+    if (parentBasicBlock != nullptr) {
+        parentBasicBlock->AppendInstruction(inst);
+    }
+    if (input != nullptr) {
+        input->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
+    return inst;
+}
+
+
+InstructionBoundsCheck* IRBuilder::CreateBoundsCheck() {
+    return CreateBoundsCheck(nullptr, nullptr, nullptr);
+}
+
+InstructionBoundsCheck* IRBuilder::CreateBoundsCheck(Value* inputPtr, Value* inputArray) {
+    return CreateBoundsCheck(nullptr, inputPtr, inputArray);
+}
+
+InstructionBoundsCheck* IRBuilder::CreateBoundsCheck(BasicBlock* parentBasicBlock) {
+    return CreateBoundsCheck(parentBasicBlock, nullptr, nullptr);
+}
+
+InstructionBoundsCheck* IRBuilder::CreateBoundsCheck(BasicBlock* parentBasicBlock, Value* inputPtr, Value* inputArray) {
+    InstructionId id = GenerateNewInstructionId();
+    InstructionBoundsCheck* inst = new InstructionBoundsCheck(id, inputPtr, inputArray);
+    if (parentBasicBlock != nullptr) {
+        parentBasicBlock->AppendInstruction(inst);
+    }
+    if (inputPtr != nullptr) {
+        inputPtr->AddUser(inst);
+    }
+    if (inputArray != nullptr) {
+        inputArray->AddUser(inst);
+    }
+    mInstructions.insert({id, inst});
+    return inst;
+}
+
+
 IRBuilder::~IRBuilder() {
     Cleanup();
 }
@@ -914,32 +961,34 @@ Instruction* IRBuilder::CopyInstruction(Instruction* src) {
 
     switch (src->GetType()) {
         default:
-        case InstructionType::Unknown:  return nullptr;
-        case InstructionType::Add:      return CreateAdd();
-        case InstructionType::Sub:      return CreateSub();
-        case InstructionType::Mul:      return CreateMul();
-        case InstructionType::Div:      return CreateDiv();
-        case InstructionType::Rem:      return CreateRem();
-        case InstructionType::And:      return CreateAnd();
-        case InstructionType::Or:       return CreateOr();
-        case InstructionType::Xor:      return CreateXor();
-        case InstructionType::Shl:      return CreateShl();
-        case InstructionType::Shr:      return CreateShr();
-        case InstructionType::Ashr:     return CreateAshr();
-        case InstructionType::Load:     return CreateLoad();
-        case InstructionType::Store:    return CreateStore();
-        case InstructionType::Jump:     return CreateJump();
-        case InstructionType::Beq:      return CreateBeq();
-        case InstructionType::Bne:      return CreateBne();
-        case InstructionType::Bgt:      return CreateBgt();
-        case InstructionType::Blt:      return CreateBlt();
-        case InstructionType::Bge:      return CreateBge();
-        case InstructionType::Ble:      return CreateBle();
-        case InstructionType::Call:     return CreateCall();
-        case InstructionType::Ret:      return CreateRet();
-        case InstructionType::Alloc:    return CreateAlloc();
-        case InstructionType::Phi:      return CreatePhi();
-        case InstructionType::Mv:       return CreateMv();
+        case InstructionType::Unknown:      return nullptr;
+        case InstructionType::Add:          return CreateAdd();
+        case InstructionType::Sub:          return CreateSub();
+        case InstructionType::Mul:          return CreateMul();
+        case InstructionType::Div:          return CreateDiv();
+        case InstructionType::Rem:          return CreateRem();
+        case InstructionType::And:          return CreateAnd();
+        case InstructionType::Or:           return CreateOr();
+        case InstructionType::Xor:          return CreateXor();
+        case InstructionType::Shl:          return CreateShl();
+        case InstructionType::Shr:          return CreateShr();
+        case InstructionType::Ashr:         return CreateAshr();
+        case InstructionType::Load:         return CreateLoad();
+        case InstructionType::Store:        return CreateStore();
+        case InstructionType::Jump:         return CreateJump();
+        case InstructionType::Beq:          return CreateBeq();
+        case InstructionType::Bne:          return CreateBne();
+        case InstructionType::Bgt:          return CreateBgt();
+        case InstructionType::Blt:          return CreateBlt();
+        case InstructionType::Bge:          return CreateBge();
+        case InstructionType::Ble:          return CreateBle();
+        case InstructionType::Call:         return CreateCall();
+        case InstructionType::Ret:          return CreateRet();
+        case InstructionType::Alloc:        return CreateAlloc();
+        case InstructionType::Phi:          return CreatePhi();
+        case InstructionType::Mv:           return CreateMv();
+        case InstructionType::NullCheck:    return CreateNullCheck();
+        case InstructionType::BoundsCheck:  return CreateBoundsCheck();
     }
 }
 
@@ -1183,6 +1232,32 @@ Function* IRBuilder::CopyFunction(Function* src) {
 
                 dstInput->AddUser(dstMv);
                 dstOutput->SetProducer(dstMv);
+            }
+            else if (srcInst->GetType() == InstructionType::NullCheck) {
+                InstructionNullCheck* srcNullCheck = static_cast<InstructionNullCheck*>(srcInst);
+                InstructionNullCheck* dstNullCheck = static_cast<InstructionNullCheck*>(dstInst);
+
+                Value* srcInput = srcNullCheck->GetInput();
+                Value* dstInput = GetOrCopyValue(srcInput);
+
+                dstNullCheck->SetInput(dstInput);
+                dstInput->AddUser(dstNullCheck);
+            }
+            else if (srcInst->GetType() == InstructionType::BoundsCheck) {
+                InstructionBoundsCheck* srcBoundsCheck = static_cast<InstructionBoundsCheck*>(srcInst);
+                InstructionBoundsCheck* dstBoundsCheck = static_cast<InstructionBoundsCheck*>(dstInst);
+
+                Value* srcInputPtr   = srcBoundsCheck->GetInputPtr();
+                Value* srcInputArray = srcBoundsCheck->GetInputArray();
+
+                Value* dstInputPtr   = GetOrCopyValue(srcInputPtr);
+                Value* dstInputArray = GetOrCopyValue(srcInputArray);
+
+                dstBoundsCheck->SetInputPtr(dstInputPtr);
+                dstBoundsCheck->SetInputArray(dstInputArray);
+
+                dstInputPtr->AddUser(dstBoundsCheck);
+                dstInputArray->AddUser(dstBoundsCheck);
             }
 
             srcInst = srcInst->GetNext();

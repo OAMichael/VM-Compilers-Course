@@ -236,6 +236,27 @@ void StaticInliningPass::InlineCall(InstructionCall* instCall) const {
                 callInput->AddUser(instMv);
                 instMv->SetInput(callInput);
             }
+            else if (user->GetType() == InstructionType::NullCheck) {
+                InstructionNullCheck* instNullCheck = static_cast<InstructionNullCheck*>(user);
+
+                calleeArg->RemoveUser(instNullCheck);
+                callInput->AddUser(instNullCheck);
+                instNullCheck->SetInput(callInput);
+            }
+            else if (user->GetType() == InstructionType::BoundsCheck) {
+                InstructionBoundsCheck* instBoundsCheck = static_cast<InstructionBoundsCheck*>(user);
+                Value* userInputPtr = instBoundsCheck->GetInputPtr();
+                Value* userInputArray = instBoundsCheck->GetInputArray();
+
+                calleeArg->RemoveUser(instBoundsCheck);
+                callInput->AddUser(instBoundsCheck);
+                if (userInputPtr == calleeArg) {
+                    instBoundsCheck->SetInputPtr(callInput);
+                }
+                if (userInputArray == calleeArg) {
+                    instBoundsCheck->SetInputArray(callInput);
+                }
+            }
         }
     }
 

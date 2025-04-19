@@ -194,11 +194,9 @@ public:
     InstructionRet* CreateRet(BasicBlock* parentBasicBlock, Value* returnValue);
 
     InstructionAlloc* CreateAlloc();
-    InstructionAlloc* CreateAlloc(Value* output);
-    InstructionAlloc* CreateAlloc(Value* output, const size_t count);
+    InstructionAlloc* CreateAlloc(Value* output, ValueType type, size_t count = 1);
     InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock);
-    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, Value* output);
-    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, Value* output, const size_t count);
+    InstructionAlloc* CreateAlloc(BasicBlock* parentBasicBlock, Value* output, ValueType type, size_t count = 1);
 
     InstructionPhi* CreatePhi();
     InstructionPhi* CreatePhi(const std::list<Value*>& inputs, Value* output);
@@ -209,6 +207,16 @@ public:
     InstructionMv* CreateMv(Value* input, Value* output);
     InstructionMv* CreateMv(BasicBlock* parentBasicBlock);
     InstructionMv* CreateMv(BasicBlock* parentBasicBlock, Value* input, Value* output);
+
+    InstructionNullCheck* CreateNullCheck();
+    InstructionNullCheck* CreateNullCheck(Value* input);
+    InstructionNullCheck* CreateNullCheck(BasicBlock* parentBasicBlock);
+    InstructionNullCheck* CreateNullCheck(BasicBlock* parentBasicBlock, Value* input);
+
+    InstructionBoundsCheck* CreateBoundsCheck();
+    InstructionBoundsCheck* CreateBoundsCheck(Value* inputPtr, Value* inputArray);
+    InstructionBoundsCheck* CreateBoundsCheck(BasicBlock* parentBasicBlock);
+    InstructionBoundsCheck* CreateBoundsCheck(BasicBlock* parentBasicBlock, Value* inputPtr, Value* inputArray);
 
 
     Value* CopyValue(Value* src);

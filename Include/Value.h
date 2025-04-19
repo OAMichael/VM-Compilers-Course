@@ -207,6 +207,10 @@ public:
         }
     }
 
+    inline bool IsPointer() const {
+        return GetValueType() == ValueType::Pointer;
+    }
+
     inline bool HasValue() const { return mValue.has_value(); }
 
     template <typename T>
